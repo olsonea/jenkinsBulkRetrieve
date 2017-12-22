@@ -112,7 +112,6 @@
             testLevel="RunSpecifiedTests" 
             rollbackOnError="true"
         />
-              <runTest>Queue_Manager_Test</runTest> 
       </sf:deploy>
     </target>
     
