@@ -1,31 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>BMCServiceDesk__ACLaunchDirectAction</members>
-        <members>BMCServiceDesk__AddNoteTextEditor</members>
-        <members>BMCServiceDesk__AdminNormalizationPage</members>
-        <members>BMCServiceDesk__AdvancedSearchFilter</members>
-        <members>BMCServiceDesk__ChatterListenerPage</members>
-        <members>BMCServiceDesk__CloseIncidentPage</members>
-        <members>BMCServiceDesk__ConfigApp</members>
-        <members>BMCServiceDesk__ConsoleAdminSetting</members>
-        <members>BMCServiceDesk__CustomActionPage</members>
-        <members>BMCServiceDesk__DocPage</members>
-        <members>BMCServiceDesk__FulfillmentInputDetailPage</members>
-        <members>BMCServiceDesk__IncProcMgmtPage</members>
-        <members>BMCServiceDesk__MobileAppIphoneRD</members>
-        <members>BMCServiceDesk__QueueListPage</members>
-        <members>BMCServiceDesk__ReleaseConsole</members>
-        <members>BMCServiceDesk__SSBroadcastWidgetPage</members>
-        <members>BMCServiceDesk__SSCategoryGroupingPage</members>
-        <members>BMCServiceDesk__StandardResolutionPage</members>
-        <members>BMCServiceDesk__StdBroadcastTicker</members>
-        <members>BMCServiceDesk__StdTaskExtension</members>
-        <members>BMCServiceDesk__SuggestionPage</members>
-        <members>BandwidthExceeded</members>
-        <members>SiteTemplate</members>
-        <members>actionHub__actionHubMSSA</members>
-        <name>ApexPage</name>
+        <members>Test</members>
+        <name>Group</name>
     </types>
     <version>41.0</version>
 </Package>
