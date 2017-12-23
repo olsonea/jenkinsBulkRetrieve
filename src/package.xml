@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>BMCServiceDesk__Change_Problem_Link__c</members>
-        <members>BMCServiceDesk__Change_Request__c</members>
-        <members>BMCServiceDesk__Incident_Change_Link__c</members>
-        <members>BMCServiceDesk__Incident__c</members>
-        <members>BMCServiceDesk__KM_KnowledgeArticle__c</members>
-        <members>BMCServiceDesk__Problem__c</members>
-        <members>BMCServiceDesk__Release__c</members>
-        <members>BMCServiceDesk__Task__c</members>
-        <name>Workflow</name>
+        <members>BMCServiceDesk__BMC_BaseElement_History__c.BMCServiceDesk__Action_ID_Required</members>
+        <members>BMCServiceDesk__BMC_BaseElement__c.BMCServiceDesk__Start_Date_Validation</members>
+        <members>BMCServiceDesk__BMC_BaseRelationship__c.BMCServiceDesk__Restrict_Impact_Direction_update</members>
+        <members>BMCServiceDesk__BMC_BusinessService__c.BMCServiceDesk__Validate_Parent_service_for_an_offering</members>
+        <members>BMCServiceDesk__BMC_Document__c.BMCServiceDesk__start_date_validation</members>
+        <members>BMCServiceDesk__BroadcastHistory__c.BMCServiceDesk__broadcastHistoryStaffIDRequired</members>
+        <members>BMCServiceDesk__Broadcasts__c.BMCServiceDesk__Check_ExpirationDate</members>
+        <members>BMCServiceDesk__Broadcasts__c.BMCServiceDesk__UniqueBroadcastIDCheck</members>
+        <members>BMCServiceDesk__CategoryTypes__c.BMCServiceDesk__UniqueCategoryTypeCheck</members>
+        <members>BMCServiceDesk__Category__c.BMCServiceDesk__Unique_Category_Id</members>
+        <members>BMCServiceDesk__IncidentHistory__c.BMCServiceDesk__actionIDRequired</members>
+        <members>BMCServiceDesk__Incident__c.BMCServiceDesk__Follow_up_date_required</members>
+        <members>BMCServiceDesk__Incident__c.BMCServiceDesk__Select_Category_or_template_or_req_def</members>
+        <members>BMCServiceDesk__Incident__c.BMCServiceDesk__Select_Either_User_Lead_or_Contact</members>
+        <members>BMCServiceDesk__Release__c.BMCServiceDesk__ActualImplementationDateValidation</members>
+        <members>BMCServiceDesk__Release__c.BMCServiceDesk__Cannot_Update_Closed_Release</members>
+        <members>BMCServiceDesk__Status__c.BMCServiceDesk__StatusUniqueCheck</members>
+        <members>BMCServiceDesk__Urgency__c.BMCServiceDesk__UrgencyID_required</members>
+        <name>ValidationRule</name>
     </types>
     <version>41.0</version>
 </Package>
