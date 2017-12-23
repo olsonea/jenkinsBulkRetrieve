@@ -33,7 +33,7 @@
     <!-- Retrieve an unpackaged set of metadata from your org -->
     <!-- The file unpackaged/package.xml lists what is to be retrieved -->
     <target name="retrieveUnpackaged">
-        <mkdir dir="src"/>
+        <mkdir dir="${retrieveTargetDirectory}"/>
         <!-- Retrieve the contents into another directory -->
         <sf:retrieve 
             username="${targetUsername}" 
@@ -48,6 +48,7 @@
 
     <!-- Retrieve all the items of a particular metadata type -->
     <target name="bulkRetrieve">
+        <mkdir dir="${retrieveTargetDirectory}"/>
         <sf:bulkRetrieve 
             username="${targetUsername}" 
             password="${targetPassword}" 
