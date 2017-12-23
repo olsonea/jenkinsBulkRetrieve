@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>BMCServiceDesk__ACDirectConnect</members>
+        <members>BMCServiceDesk__ACLaunchDirectAction</members>
+        <members>BMCServiceDesk__ACLaunchFPConsolePage</members>
+        <members>BMCServiceDesk__AcActionsStdLayout</members>
+        <members>BMCServiceDesk__AdminCMDBDiscoveryProvision</members>
+        <members>BMCServiceDesk__AdminGeneralSettings</members>
+        <members>BMCServiceDesk__AdminModelPage</members>
+        <members>BMCServiceDesk__AutoAssignment</members>
+        <members>BMCServiceDesk__CIExplorerSettings</members>
+        <members>BMCServiceDesk__CloseRelease</members>
+        <members>BMCServiceDesk__ComposeEmailPage</members>
+        <members>BMCServiceDesk__ConsoleProblemDetail</members>
+        <members>BMCServiceDesk__KM_PublishArticle</members>
+        <members>BMCServiceDesk__MobileAppIphoneApprovals</members>
+        <members>BMCServiceDesk__ReqDefDescription</members>
+        <members>BMCServiceDesk__SDEHome</members>
+        <members>BMCServiceDesk__SSEditThemePage</members>
+        <members>BMCServiceDesk__StageHTMLProviderPage</members>
+        <members>BMCServiceDesk__StdChangeHistoryPage</members>
+        <members>BMCServiceDesk__StdDashboardPage</members>
+        <members>BMCServiceDesk__StdFormHelpCommonLink</members>
+        <members>BMCServiceDesk__StdTaskHistoryPage</members>
+        <members>BMCServiceDesk__TabErrorPage</members>
+        <members>BMCServiceDesk__stdDisplayBroadcast</members>
+        <name>ApexPage</name>
+    </types>
+    <version>41.0</version>
+</Package>

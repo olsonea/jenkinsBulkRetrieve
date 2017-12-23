@@ -1,0 +1,3932 @@
+<apex:page title="actionHub"
+	standardStylesheets="false" 
+	sidebar="false" 
+	showHeader="true" 
+	applyBodyTag="true" 
+	applyHtmlTag="true" docType="html-5.0" controller="actionHub.UIRemoting" action="{!checkMSSA}">
+
+    <meta http-equiv="X-Frame-Options" content="deny"/>
+
+	<style type="text/css">
+		.cloaked { display:none; }
+	</style>
+
+
+    <div id="topContainer" class="app-container" ng-app="actionHubUI" ng-controller="MainController as application" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+        <!-- Stylesheets, please -->
+        <link rel="stylesheet" href="{!URLFOR($Resource.UIresources, 'stylesheets/master.css')}" type="text/css"/>
+
+        <!-- Scripts, please -->
+        <script src="{!URLFOR($Resource.UIresources, 'scripts/plugins.js')}"></script>
+        <script>
+Visualforce.remoting.timeout = 120000;
+var resource_path = "{!URLFOR($Resource.UIresources)}/";
+var moduleApp = angular.module('actionHubUI', ['app.controllers', 'app.services', 'ngProgressLite', 'ui.router', 'angular.filter', 'puElasticInput', 'ngSanitize', 'ui.ace', 'selectize', 'uiSwitch', 'as.sortable', 'monospaced.elastic', 'ngJsonExplorer', 'ngToast']);
+var moduleServices = angular.module('app.services', []);
+var moduleControllers = angular.module('app.controllers', []);
+
+
+
+moduleApp
+
+// Configurations
+.config(['$httpProvider', '$stateProvider', '$urlRouterProvider', '$locationProvider', 'ngProgressLiteProvider', 'ngToastProvider', '$compileProvider', function($httpProvider, $stateProvider, $urlRouterProvider, $locationProvider, ngProgressLiteProvider, ngToastProvider, $compileProvider) {
+
+    // $httpProvider
+
+    $urlRouterProvider.otherwise("/rules");
+    // $locationProvider.html5Mode(true);
+
+    $stateProvider
+        .state("rules", {url: "/rules", templateUrl: "{!URLFOR($Resource.UIresources, 'views/rules/explorer.html')}", controller: "RulesController"})
+        .state("rules-creator", {url: "/rules/create", templateUrl: "{!URLFOR($Resource.UIresources, 'views/rules/builder.html')}", controller: "RulesController"})
+        .state("rules-search", {url: "/rules/search", templateUrl: "{!URLFOR($Resource.UIresources, 'views/rules/search.html')}", controller: "RulesController"})
+        .state("rules-editor", {url: "/rules/:id", templateUrl: "{!URLFOR($Resource.UIresources, 'views/rules/builder.html')}", controller: "RulesController"})
+        .state("connections", {url: "/connections", templateUrl: "{!URLFOR($Resource.UIresources, 'views/connections/list.html')}", controller: "ConnectionsController"})
+        .state("logs", {url: "/logs", templateUrl: "{!URLFOR($Resource.UIresources, 'views/logs/list.html')}", controller: "MainController"})
+        .state("classes", {url: "/classes", templateUrl: "{!URLFOR($Resource.UIresources, 'views/classes/list.html')}", controller: "ClassesController"})
+        .state("settings", {url: "/settings", templateUrl: "{!URLFOR($Resource.UIresources, 'views/settings/list.html')}", controller: "SettingsController"});
+
+    ngProgressLiteProvider.settings.speed = 1000;
+
+    ngToastProvider.configure({
+        verticalPosition: 'bottom',
+        horizontalPosition: 'center',
+        maxNumber: 1,
+        dismissOnTimeout: false,
+        dismissOnClick: false,
+        dismissButton: true
+    });
+
+    $compileProvider.debugInfoEnabled(false);
+
+}])
+
+// Runtime
+.run(['$state', function ($state) {
+    $state.transitionTo('rules');
+}]);
+
+moduleControllers
+    .controller("ClassesController", ['$scope', '$http', '$location', '$state', '$interval', '$sce', '$filter', 'ngProgressLite', 'ngToast', 'SFUI', function($scope, $http, $location, $state, $interval, $sce, $filter, ngProgressLite, ngToast, SFUI) {
+
+    $scope.index = function () {
+
+        if ($state.is('classes')) {
+
+            // Set menu active item
+            $scope.menu.active = {id: 3, label: 'Classes', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#custom_apps'), location: 'classes'};
+
+            // Start progress loader
+            $scope.spinner_show('Retrieving class data...');
+
+            // Get all classes
+            SFUI.getData('getRegistrations', null, null, null, null, null, function (result, event) {
+
+                // Complete progress loader
+                $scope.spinner_hide();
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store connections in container
+                    $scope.classes = SFUI.abstract_data_add('Classes', result);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+        }
+
+    }
+
+    $scope.add = function () {
+
+        // Open modal window
+        $scope.modals_open('classes_add');
+
+        // Get object model
+        $scope.class = SFUI.abstract_data_new('Class');
+
+    }
+
+    $scope.store = function () {
+
+        // Start progress loader
+        $scope.spinner_show('Saving class data...');
+
+        // Post data
+        SFUI.postData('saveRegistration', SFUI.abstract_data_remove('Classes', $scope.class), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Add UI flags
+                result = SFUI.abstract_data_add('Classes', result);
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Class saved successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Merge updated ActionDataObject
+                if ($scope.class.Records[0].NewData.Id == undefined) {
+
+                    // Update current connection record
+                    $scope.class = SFUI.abstract_data_add('Classes', result);
+
+                    // Update records
+                    $scope.classes.Records.push($scope.class.Records[0]);
+
+                    // Close modal window
+                    $scope.modals_close('classes_add');
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                } else {
+
+                    // Manipulated connection result
+                    $scope.class_result = SFUI.abstract_data_add('Classes', result);
+
+                    // Update records
+                    $scope.class.Records = $filter('filter')($scope.classes.Records, {NewData: {Id: $scope.class_result.Records[0].NewData.Id}}, true);
+                    $scope.classes.Records[$scope.classes.Records.indexOf($scope.class.Records[0])] = $scope.class_result.Records[0];
+
+                    // Close modal window
+                    $scope.modals_close('classes_add');
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+	
+    
+    $scope.edit = function (id) {
+
+        // Open modal window
+        $scope.modals_open('classes_add');
+
+        // Pull enabled/disabled data
+        $scope.class = angular.copy($scope.classes);
+        $scope.class.Records = $filter('filter')(angular.copy($scope.classes.Records), {NewData: {Id: id}}, true);
+
+    }
+
+    $scope.delete = function () {
+        $scope.modals_open('delete_confirm');
+    }
+
+    $scope.delete_cancel = function () {
+        $scope.modals_close('delete_confirm');
+    }
+
+    $scope.delete_confirm = function (id) {
+
+        // Start progress loader
+        $scope.spinner_show('Deleting data...');
+
+        // Post data
+        SFUI.postData('deleteRegistration', SFUI.abstract_data_remove('Classes', $scope.class), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Class deleted successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Close modal window
+                $scope.modals_close('classes_add');
+                $scope.modals_close('delete_confirm');
+
+                // Refresh the class list
+                $state.reload();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Close modal window
+                $scope.modals_close('delete_confirm');
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.index();
+
+    return $scope;
+
+}]);
+
+moduleControllers
+    .controller("ConnectionsController", ['$scope', '$http', '$location', '$state', '$interval', '$sce', '$filter', 'ngProgressLite', 'ngToast', 'SFUI', function($scope, $http, $location, $state, $interval, $sce, $filter, ngProgressLite, ngToast, SFUI) {
+
+    $scope.connections = {};
+    $scope.connection = {};
+    $scope.connection_settings = {};
+    $scope.connection_settings_uiflags = {};
+    $scope.connection_settings_uiflags.group_active = 'basic';
+    $scope.adapters = {};
+    $scope.users = {};
+
+    $scope.set
+    $scope.index = function () {
+
+        if ($state.is('connections')) {
+
+            // Set menu active item
+            $scope.menu.active = {id: 2, label: 'Connections', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#socialshare'), location: 'connections'};
+            
+            //When getting connections, the spinner parent will have class = "slds-grid"
+            
+            
+            // Start progress loader
+            $scope.spinner_show('Retrieving connection data...');
+            
+            
+            // Get all connections
+            SFUI.getData('getConnections', null, null, null, null, null, function (result, event) {
+
+                // Complete progress loader
+                $scope.spinner_hide();
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store connections in container
+                    $scope.connections = SFUI.abstract_data_add('Connections', result);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+            // Get all adapters
+            SFUI.getData('getAdapters', null, null, null, null, null, function (result, event) {
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store connections in container
+                    $scope.adapters = SFUI.abstract_data_add('Adapters', result);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+            // Get all adapters
+            SFUI.getData('getUsers', null, null, null, null, null, function (result, event) {
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store connections in container
+                    $scope.users = result;
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+        }
+
+    }
+
+    $scope.add = function () {
+
+        // Open modal window
+        $scope.modals_open('connections_add');
+
+        // Get object model
+        $scope.connection = SFUI.abstract_data_new('Connection');
+
+        // Reset connection settings
+        $scope.connection_settings = {};
+
+        // Set active tab
+        $scope.connection_settings_uiflags.group_active = 'basic';
+
+    }
+
+    $scope.store = function () {
+
+        // Start progress loader
+        $scope.spinner_show('Saving connection data...');
+        
+        // Select current setting record
+        var existing_connection_settings = $filter('filter')($scope.connection.Records[0].ChildDataObjects, {SourceObject: 'ConnectionDetails__c'}, true)[0];
+
+        // Update settings in current connection
+       existing_connection_settings = angular.merge(existing_connection_settings, $scope.connection_settings);
+       
+       //9-18-2016 BMORGAN - Fixes for https://github.com/Cloudaction/actionHub-3/issues/114 & 
+       //	Salesforce can't deserialize an enum, and it won't be used anyway
+       $scope.connection.Status = null;
+        // Post data
+        SFUI.postData('saveConnection', SFUI.abstract_data_remove('Connections', $scope.connection), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            //9-18-2016 BMORGAN - Fixes for https://github.com/Cloudaction/actionHub-3/issues/114 & 
+            //UIController now returns "Status" on the top ADO.  
+            //	FATALERROR goes to the full ngToast.danger code that doesn't update the form.
+            //	ERROR is considered a success, but the modal is not closed.
+             
+            // Success callback
+            if ((result.Error == '' && event.statusCode < 400) || (result.Error != '' && event.statusCode < 400 && result.Status == 'ERROR')) {
+
+                // Add UI flags
+                result = SFUI.abstract_data_add('Connections', result);
+
+                // Push success message toast
+                if(result.Status != 'ERROR')
+	                ngToast.success({
+	                    content: 'Connection saved successfully!',
+	                    dismissOnTimeout: true
+	                });
+            	else
+            		ngToast.danger(result.Error);
+            	
+                // Merge updated ActionDataObject
+                if ($scope.connection.Records[0].NewData.Id == undefined) {
+
+                    // Update current connection record
+                    $scope.connection = SFUI.abstract_data_add('Connections', result);
+
+                    // Update records
+                    $scope.connections.Records.push($scope.connection.Records[0]);
+
+                    // Close modal window
+                    if(result.Status != 'ERROR')
+                    	$scope.modals_close('connections_add');
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                    // Open record for editing
+                    // $scope.edit($scope.connection.Records[0].NewData.Id);
+
+                } else {
+
+                    // Manipulated connection result
+                    $scope.connection_result = SFUI.abstract_data_add('Connections', result);
+
+                    // Update record
+                    $scope.connection.Records = $filter('filter')($scope.connections.Records, {NewData: {Id: $scope.connection_result.Records[0].NewData.Id}}, true);
+                    $scope.connections.Records[$scope.connections.Records.indexOf($scope.connection.Records[0])] = $scope.connection_result.Records[0];
+
+                    // Close modal window
+                    if(result.Status != 'ERROR')
+                    {
+                    	$scope.modals_close('connections_add');
+                    }
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                    // Open record for editing
+                    // $scope.edit($scope.connection.Records[0].NewData.Id);
+
+                }
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Revert back the settings
+                $scope.connection_settings = SFUI.abstract_data_add('AdapterSettings', $scope.connection_settings);
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.edit = function (id) {
+
+        // Open modal window
+        $scope.modals_open('connections_add');
+
+        // Pull enabled/disabled data
+        $scope.connection = angular.copy($scope.connections);
+        $scope.connection.Records = $filter('filter')(angular.copy($scope.connections.Records), {NewData: {Id: id}}, true);
+
+        // Store connection settings object
+        $scope.connection_settings = angular.copy($filter('filter')($scope.connection.Records[0].ChildDataObjects, {SourceObject: 'ConnectionDetails__c'}, true)[0]);
+        if (angular.isDefined($scope.connection_settings) && $scope.connection_settings.Records.length > 0) {
+            $scope.connection_settings = SFUI.abstract_data_add('ExitsingAdapterSettings', $scope.connection_settings);
+            console.log($scope.connection_settings);
+        }
+
+        // Set active tab
+        $scope.connection_settings_uiflags.group_active = 'basic';
+
+    }
+
+    $scope.delete = function () {
+        $scope.modals_open('delete_confirm');
+    }
+
+    $scope.delete_cancel = function () {
+        $scope.modals_close('delete_confirm');
+    }
+
+    $scope.delete_confirm = function (id) {
+
+        // Start progress loader
+        $scope.spinner_show('Deleting data...');
+
+        // Post data
+        SFUI.postData('deleteConnection', SFUI.abstract_data_remove('Connections', $scope.connection), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Connection deleted successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Close modal window
+                $scope.modals_close('connections_add');
+                $scope.modals_close('delete_confirm');
+
+                // Refresh connection list
+                $state.reload();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Close modal window
+                $scope.modals_close('delete_confirm');
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.adapter_select = function () {
+
+        // Pull selected adapter data
+        var adapter_selected = $filter('filter')($scope.adapters.Records, {NewData: {Id: $scope.connection.Records[0].NewData.AdapterId__c}}, true)[0];
+
+        // Update current connection data
+        $scope.connection.Records[0].NewData.AdapterName__c = adapter_selected.NewData.DisplayName;
+        $scope.connection.Records[0].NewData.AdapterClass__c = adapter_selected.NewData.Name;
+
+        // Pull selected adapter data
+        var adapter_selected = $filter('filter')($scope.adapters.Records, {NewData: {Id: $scope.connection.Records[0].NewData.AdapterId__c}}, true)[0];
+        var adapter_selected_settings = $filter('filter')(adapter_selected.ChildDataObjects, {SourceObject: 'AdapterSettings'}, true)[0];
+
+        // Update connection settings data
+        $scope.connection_settings = angular.copy(SFUI.abstract_data_add('AdapterSettings', adapter_selected_settings));
+        console.log($scope.connection_settings);
+
+    }
+
+    $scope.status_toggle = function (id) {
+
+        // Pull enabled/disabled data
+        $scope.connection = angular.copy($scope.connections);
+        $scope.connection.Records = $filter('filter')($scope.connections.Records, {NewData: {Id: id}}, true);
+
+        // Start progress loader
+        $scope.spinner_show('Saving connection data...');
+
+        // Post data
+        SFUI.postData('saveConnection', SFUI.abstract_data_remove('Connections', $scope.connection), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Connection saved successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Reset the toggle button
+                if ($scope.connection.Records[0].NewData.Active__c == true) {
+                    $scope.connection.Records[0].NewData.Active__c = false;
+                } else {
+                    $scope.connection.Records[0].NewData.Active__c = true;
+                }
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.tabs_navigate = function (key) {
+        $scope.connection_settings_uiflags.group_active = key;
+    }
+
+    $scope.index();
+
+    return $scope;
+
+}]);
+
+moduleControllers
+    .controller("MainController", ['$rootScope', '$scope', '$http', '$location', '$state', '$timeout', '$interval', '$sce', 'SFUI', function($rootScope, $scope, $http, $location, $state, $timeout, $interval, $sce, SFUI) {
+
+    // Define variables
+    $scope.credentials = {};
+    $scope.modals_body_scrolljack = false;
+
+    $scope.menu = {};
+    $scope.menu.list_status = false;
+    $scope.menu.list = [
+        {id: 1, label: 'Rules', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#connected_apps'), location: 'rules'},
+        {id: 2, label: 'Connections', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#socialshare'), location: 'connections'},
+        // {id: 3, label: 'Logs', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#list'), location: 'logs'},
+        {id: 3, label: 'Classes', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#custom_apps'), location: 'classes'},
+        {id: 4, label: 'Settings', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#settings'), location: 'settings'}
+    ];
+    // $scope.menu.active = {id: 1, label: 'Rules', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#puzzle'), location: 'rules'};
+
+    $scope.loglist = {};
+    $scope.loglist.type = 'simple';
+    $scope.loglist.list = [
+        {id: 1, expanded: false},
+        {id: 2, expanded: false}
+    ];
+
+    $scope.modals = {};
+    $scope.modals.expression_builder = false;
+    $scope.modals.mapping_builder = false;
+    $scope.modals.connections_settings = false;
+
+    $scope.search_term = '';
+    $scope.filter_term = '';
+
+    $scope.spinner = {};
+    $scope.spinner.visibility = false;
+    $scope.spinner.parent = null;
+    $scope.spinner.message = 'Retrieving data...';
+
+    $scope.index = function () {}
+
+    $scope.menu_toggle = function () {
+        if ($scope.menu.list_status) {
+            $scope.menu.list_status = false;
+        } else {
+            $scope.menu.list_status = true;
+        }
+    }
+
+    $scope.menu_link = function (link, index) {
+        $state.go(link);
+        $scope.menu.list_status = false;
+        $scope.menu.active = $scope.menu.list[index];
+    }
+
+    $scope.loglist_expander = function (index) {
+        if ($scope.loglist.list[index].expanded) {
+            $scope.loglist.list[index].expanded = false;
+        } else {
+            $scope.loglist.list[index].expanded = true;
+        }
+    }
+
+    $scope.modals_close = function (key) {
+        $scope.modals[key] = false;
+        $('body').removeClass('body-scrolljack');
+    }
+
+    $scope.modals_open = function (key) {
+        $scope.modals[key] = true;
+        $('body').addClass('body-scrolljack');
+    }
+
+    $scope.body_reset = function () {
+        $scope.menu.list_status = false;
+    }
+
+    $scope.generate_resource_url = function (file_url) {
+        return resource_path+file_url;
+    }
+
+    $scope.generate_local_time = function (timestamp, format) {
+        return moment.utc(timestamp).local().format(format);
+    }
+
+    $scope.search = function () {
+        if ($state.is('rules-search') == false) {
+            $state.go('rules-search');
+        }
+        $scope.filter_term = $scope.search_term;
+
+        if ($scope.filter_term != '') {
+            $rootScope.$broadcast('rules_expand_all');
+        } else {
+            $rootScope.$broadcast('rules_collapse_all');
+            $state.go('rules');
+        }
+
+    }
+
+    $scope.search_clear = function () {
+        $scope.search_term = '';
+        $scope.filter_term = '';
+        $rootScope.$broadcast('rules_collapse_all');
+        $state.go('rules');
+    }
+
+    $scope.spinner_show = function(message, parent) {
+    	
+        $scope.spinner.visibility = true;
+        $scope.spinner.message = message;
+        $scope.spinner.parent = parent;
+    }
+
+    $scope.spinner_hide = function() {
+    	$(".cloaked").css( "display", "block" );
+        $scope.spinner.visibility = false;
+    }
+
+    $scope.run_svgsprite = function () {
+        svg4everybody();
+    }
+
+    $timeout(function () {
+        svg4everybody();
+    }, 2000);
+
+    $scope.index();
+
+    return angular.extend(this, $scope);
+
+}]);
+
+moduleControllers
+    .controller("RulesController", ['$scope', '$http', '$location', '$state', '$stateParams', '$interval', '$sce', '$filter', '$sanitize', '$window', 'ngProgressLite', 'ngToast', 'SFUI', function($scope, $http, $location, $state, $stateParams, $interval, $sce, $filter, $sanitize, $window, ngProgressLite, ngToast, SFUI) {
+
+    // Data containers
+    $scope.rules = {};
+    $scope.connection_adapters = {};
+    $scope.connection_adapters.Records = [];
+    $scope.connection_adapters.UIFlags = {};
+    $scope.connection_adapters.UIFlags.loaded = false;
+    $scope.connection_adapter_fields = {};
+    $scope.connection_adapter_fields.Records = [];
+    $scope.function_groups = {};
+
+    $scope.mapping = {};
+    $scope.mapping.Details = [];
+    $scope.fields = {};
+    $scope.fields.UIFlags = {};
+    $scope.fields.UIFlags.expanded = false;
+    $scope.fields.Records = [];
+    $scope.print = {};
+    $scope.print.select_all = false;
+
+    $scope.rule_params = {};
+    $scope.rule_params.parameters = 0;
+    $scope.editor_params = {};
+    $scope.editor_params.wrap = false;
+    $scope.mapping_params = {};
+    $scope.mapping_params.edit_mode = false;
+    $scope.expression_builder_params = {};
+    $scope.expression_builder_params.base_data_loaded = false;
+
+    $scope.expression_builder_props = {
+        collection: '', // Conditions/Actions/Parameters/FieldMappings/ResponseMappings
+        index: 0, // Index of the row
+        parent_index: 0, // Index of the parent row
+        field: 'left_exp', // Field name
+        connection_id: '', // Connection ID
+        object_api_name: '' // Object API Name
+    }
+
+    $scope.eb_output = '';
+
+    $scope.index = function () {
+
+        // Rule Explorer
+        if ($state.is('rules')) {
+
+            // Set active menu item
+            $scope.menu.active = {id: 1, label: 'Rules', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#connected_apps'), location: 'rules'};
+
+            // Get initial data
+            $scope.get_rules().then(function () {
+                $scope.spinner_hide();
+            });
+
+        }
+
+        // Rule Search
+        if ($state.is('rules-search')) {
+
+            // Set active menu item
+            $scope.menu.active = {id: 1, label: 'Rules', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#connected_apps'), location: 'rules'};
+
+            // Get initial data
+            $scope.get_rules().then(function () {
+                $scope.spinner_hide();
+            });
+
+        }
+
+        // Rule Builder
+        if ($state.is('rules-creator')) {
+
+            // Set active menu item
+            $scope.menu.active = {id: 1, label: 'Rules', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#connected_apps'), location: 'rules'};
+
+            // Fetch new Rule object model
+            $scope.rule = SFUI.abstract_data_add('Rules', SFUI.abstract_data_new('Rule'));
+
+            // Get initial data
+            $scope.get_connections().then(function () {
+                $scope.spinner_hide();
+            });
+
+        }
+
+        if ($state.is('rules-editor')) {
+
+            // Set active menu item
+            $scope.menu.active = {id: 1, label: 'Rules', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#connected_apps'), location: 'rules'};
+
+            // Start progress loader
+            $scope.spinner_show('Retrieving data...');
+
+            // Get initial data
+            $scope.get_rule().then(function () {
+                return $scope.get_connections();
+            }).then(function () {
+                return $scope.connection_adapters_fetch();
+            }).then(function () {
+                $scope.spinner_hide();
+            });
+
+        }
+
+    }
+
+    // Promise functions
+
+    // Get all Rules
+    $scope.get_rules = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Rules...');
+
+        // Fetch all rules
+        SFUI.getData('getRules', null, null, null, null, null, function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store rules in container
+                $scope.rules = SFUI.abstract_data_add('Rules', result);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Get single Rule
+    $scope.get_rule = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Rule...');
+
+        // Fetch all rules
+        SFUI.getData('getRule', $stateParams.id, null, null, null, null, function (result, event) {
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store rules in container
+                $scope.rule = SFUI.abstract_data_add('Rules', result);
+
+                // Conditions
+                var rule_conditions = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'RuleConditions__c'}, true);
+                var rule_conditions_sorted = $filter('orderBy')(rule_conditions, 'NewData.DisplayOrder__c');
+                $scope.rule.Records[0].Conditions = rule_conditions_sorted;
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Get all Connections
+    $scope.get_connections = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Connections...');
+
+        // Fetch Connections
+        SFUI.getData('getConnections', null, null, null, null, null, function (result, event) {
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store connections in container
+                $scope.connections = SFUI.abstract_data_add('Connections', result);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Get Adapters
+    $scope.get_adapters = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Adapters...');
+
+        // Fetch Adapters
+        SFUI.getData('getAdapters', null, null, null, null, null, function (result, event) {
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store custom functions in container
+                $scope.adapters = result;
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Get all Mappings
+    $scope.get_mappings = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Mappings...');
+
+        // Fetch Mappings
+        SFUI.getData('getMappings', null, null, null, null, null, function (result, event) {
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store mappings in container
+                $scope.mappings = SFUI.abstract_data_add('Mappings', result);
+                $scope.mappings.UIFlags = {};
+                $scope.mappings.UIFlags.expanded = false;
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Get all Custom Functions
+    $scope.get_custom_functions = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Custom Functions...');
+
+        // Fetch Custom Functions
+        SFUI.getData('getCustomFunctions', null, null, null, null, null, function (result, event) {
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store custom functions in container
+                $scope.custom_functions = SFUI.abstract_data_add('CustomFunctions', result);
+
+                // Create group records
+                angular.forEach($scope.custom_functions.Records, function (function_group, key) {
+                    angular.forEach(function_group.ChildDataObjects[0].Records, function (func, key) {
+                        $scope.function_groups[function_group.NewData.Id+"/"+func.NewData.DisplayGroup] = false;
+                    });
+                });
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Toggle expand/collapse rule
+    $scope.rules_toggle = function (index) {
+        if ($scope.filteredRules[index].UIFlags.expanded) {
+            $scope.filteredRules[index].UIFlags.expanded = false;
+        } else {
+            $scope.filteredRules[index].UIFlags.expanded = true;
+        }
+    }
+
+    // Toggle expand/collapse action
+    $scope.actions_toggle = function (rule_index, action_index) {
+        if ($scope.filteredRules[rule_index].Actions[action_index].UIFlags.expanded) {
+            $scope.filteredRules[rule_index].Actions[action_index].UIFlags.expanded = false;
+        } else {
+            $scope.filteredRules[rule_index].Actions[action_index].UIFlags.expanded = true;
+        }
+    }
+
+    // Toggle expand/collapse action in editor
+    $scope.actions_toggle_editor = function (index) {
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        if (actions_collection.Records[index].UIFlags.expanded) {
+            actions_collection.Records[index].UIFlags.expanded = false;
+        } else {
+            actions_collection.Records[index].UIFlags.expanded = true;
+            if (actions_collection.Records[index].UIFlags.objects_loaded == false) {
+                $scope.action_adapters_fetch(index);
+            }
+        }
+    }
+
+    // Add condition
+    $scope.conditions_add = function () {
+        var conditions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'RuleConditions__c'}, true)[0];
+        var condition_new = SFUI.abstract_data_new('Condition');
+        condition_new.NewData.DisplayOrder__c = conditions_collection.Records.length;
+        if ($scope.rule.Records[0].Conditions.length > 0) {
+            if ($scope.rule.Records[0].Conditions[$scope.rule.Records[0].Conditions.length - 1].NewData.LogicalOperator__c == null || $scope.rule.Records[0].Conditions[$scope.rule.Records[0].Conditions.length - 1].NewData.LogicalOperator__c == '' || $scope.rule.Records[0].Conditions[$scope.rule.Records[0].Conditions.length - 1].NewData.LogicalOperator__c == 'NONE') {
+                $scope.rule.Records[0].Conditions[$scope.rule.Records[0].Conditions.length - 1].NewData.LogicalOperator__c = 'AND';
+            }
+        }
+        conditions_collection.Records.push(condition_new);
+    }
+
+    // Remove condition
+    $scope.conditions_remove = function (index) {
+        var conditions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'RuleConditions__c'}, true)[0];
+        conditions_collection.Records.splice(index, 1);
+        $scope.conditions_reindex();
+    }
+
+    // Re-index conditions
+    $scope.conditions_reindex = function () {
+        var conditions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'RuleConditions__c'}, true)[0];
+        angular.forEach(conditions_collection.Records, function (condition, key) {
+            condition.NewData.DisplayOrder__c = key;
+        });
+    }
+
+    // Add action
+    $scope.actions_add = function () {
+        var action_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        var action_new = SFUI.abstract_data_new('Action');
+        action_new.NewData.DisplayOrder__c = action_collection.Records.length;
+        action_collection.Records.push(action_new);
+    }
+
+    // Remove action
+    $scope.actions_remove = function (index) {
+        var action_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        action_collection.Records.splice(index, 1);
+        $scope.actions_reindex();
+    }
+
+    // Re-index actions
+    $scope.actions_reindex = function () {
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        angular.forEach(actions_collection.Records, function (action, key) {
+            action.NewData.DisplayOrder__c = key;
+        });
+    }
+
+    // Fetch adapters and fields for source
+    $scope.connection_adapters_fetch = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Load initial data
+        $scope.get_connection_adapters_fetch().then(function () {
+            return $scope.get_connection_adapters_fields_fetch();
+        }).then(function () {
+            $scope.spinner_hide();
+            d.resolve();
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Fetch adapters and fields for source
+    $scope.connection_adapters_fields_fetch = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Load initial data
+        $scope.get_connection_adapters_fields_fetch().then(function () {
+            $scope.spinner_hide();
+            d.resolve();
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Fetch adapters for connection
+    $scope.get_connection_adapters_fetch = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Currently selected connection
+        var connection_selected = $filter('filter')($scope.connections.Records, {NewData: {Id: $scope.rule.Records[0].NewData.SourceConnectionId__c}}, true)[0];
+
+        // Set connection name
+        $scope.rule.Records[0].NewData.SourceConnectionName__c = connection_selected.NewData.ConnectionName__c;
+
+        // Empty adapter list
+        $scope.connection_adapters = {};
+        $scope.connection_adapters.Records = [];
+
+        // Validate if connection is selected
+        if (connection_selected.NewData.Id != '' || connection_selected.NewData.Id != null) {
+
+            // Start progress loader
+            $scope.spinner_show('Retrieving Source Objects...');
+
+            // Fetch adapters
+            SFUI.getData('getMetaDataObjectsById', connection_selected.NewData.Id, null, null, null, null, function (result, event) {
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store rules in container
+                    $scope.connection_adapters = result;
+                    $scope.connection_adapters.UIFlags = {};
+                    $scope.connection_adapters.UIFlags.loaded = true;
+
+                    // Resolve promise
+                    d.resolve();
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error+' 1');
+
+                    // Set empty MetaDataObjects
+                    $scope.connection_adapters = {};
+                    $scope.connection_adapters.Records = [];
+                    $scope.connection_adapters.UIFlags = {};
+                    $scope.connection_adapters.UIFlags.loaded = true;
+
+                    // Resolve promise
+                    d.resolve();
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+        } else {
+
+            // Resolve promise
+            d.resolve();
+
+        }
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Fetch fields based on adapters
+    $scope.get_connection_adapters_fields_fetch = function () {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Empty field list
+        $scope.connection_adapter_fields = {};
+        $scope.connection_adapter_fields.Records = [];
+
+        // Currently selected connection
+        var connection_selected = $filter('filter')($scope.connections.Records, {NewData: {Id: $scope.rule.Records[0].NewData.SourceConnectionId__c}}, true)[0];
+
+        // Set object name
+        if ($scope.connection_adapters.Records.length > 0) {
+            $scope.rule.Records[0].NewData.SourceObjectDisplayName__c = $scope.connection_adapters.Records[0].NewData[$scope.rule.Records[0].NewData.SourceObjectAPIName__c];
+        } else {
+            $scope.rule.Records[0].NewData.SourceObjectDisplayName__c = $scope.rule.Records[0].NewData.SourceObjectAPIName__c;
+        }
+
+        // Validate if Object is selected and send request
+        if ($scope.rule.Records[0].NewData.SourceObjectAPIName__c != '') {
+
+            // Start progress loader
+            $scope.spinner_show('Retrieving Source Fields...');
+            
+                       
+            // Fetch fields
+            SFUI.getData('getMetaDataObjectFieldsById', connection_selected.NewData.Id, null, null, $scope.rule.Records[0].NewData.SourceObjectAPIName__c, null, function (result, event) {
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store rules in container
+                    $scope.connection_adapter_fields = result;
+
+                    // Resolve promise
+                    d.resolve();
+
+                    // Apply scope changes
+                    $scope.$apply();
+                    var sTest = "test";
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error+' 2');
+
+                    // Set empty MetaDataObjectsFields
+                    $scope.connection_adapter_fields = {};
+                    $scope.connection_adapter_fields.Records = [];
+
+                    // Resolve promise
+                    d.resolve();
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+        } else {
+
+            // Resolve promise
+            d.resolve();
+
+        }
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    $scope.action_adapters_fetch = function (index) {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Load all data
+        $scope.get_action_adapters_fetch(index).then(function () {
+            return $scope.get_action_adapters_fields_fetch(index);
+        }).then(function () {
+            $scope.spinner_hide();
+            d.resolve();
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    $scope.action_adapters_fields_fetch = function (index) {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Load all data
+        $scope.get_action_adapters_fields_fetch(index).then(function () {
+            $scope.spinner_hide();
+            d.resolve();
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Fetch action adapters
+    $scope.get_action_adapters_fetch = function (index) {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Selected actions, connection and connector settings
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        var actions_parameters = $filter('filter')(actions_collection.Records[index].ChildDataObjects, {SourceObject: 'ActionParameters'}, true)[0];
+        var connection_selected = $filter('filter')($scope.connections.Records, {NewData: {Id: actions_collection.Records[index].NewData.TargetConnectionId__c}}, true)[0];
+        var connector_settings = $filter('filter')(connection_selected.ChildDataObjects, {SourceObject: 'ActionParameters'}, true)[0];
+
+        // Copy connector settings
+        actions_collection.Records[index].MetaDataObjects = {};
+        actions_collection.Records[index].MetaDataObjects.Records = [];
+        actions_collection.Records[index].MetaDataObjects.UIFlags = {};
+        actions_collection.Records[index].MetaDataObjects.UIFlags.loaded = false;
+
+        angular.forEach(actions_collection.Records[index].ChildDataObjects, function (child_object, key) {
+            if (child_object.SourceObject == 'ActionParameters') {
+                if (actions_collection.Records[index].UIFlags.parameter_change == true) {
+                    actions_collection.Records[index].ChildDataObjects[key] = SFUI.abstract_data_add('Parameters', connector_settings);
+                    console.log(actions_collection.Records[index].ChildDataObjects[key]);
+                }
+                if (actions_collection.Records[index].UIFlags.parameter_change == false) {
+                    actions_collection.Records[index].UIFlags.parameter_change = true;
+                }
+            }
+        });
+        actions_collection.Records[index].NewData.TargetConnectionName__c = connection_selected.NewData.ConnectionName__c;
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving Target Objects...');
+
+        SFUI.getData('getMetaDataObjectsById', connection_selected.NewData.Id, null, null, null, null, function (result, event) {
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store rules in container
+                actions_collection.Records[index].MetaDataObjects = result;
+                actions_collection.Records[index].MetaDataObjects.UIFlags = {};
+                actions_collection.Records[index].MetaDataObjects.UIFlags.loaded = true;
+                actions_collection.Records[index].UIFlags.objects_loaded = true;
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Set empty MetaDataObjects
+                actions_collection.Records[index].MetaDataObjects = {};
+                actions_collection.Records[index].MetaDataObjects.Records = [];
+                actions_collection.Records[index].UIFlags.objects_loaded = true;
+
+                // Resolve promise
+                d.resolve();
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Fetch action adapter fields
+    $scope.get_action_adapters_fields_fetch = function (index) {
+
+        // Start promise
+        var d = $.Deferred();
+
+        // Selected action and connection
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        var connection_selected = $filter('filter')($scope.connections.Records, {NewData: {Id: actions_collection.Records[index].NewData.TargetConnectionId__c}}, true)[0];
+
+        if(actions_collection.Records[index].MetaDataObjects.Records.length > 0) {
+            actions_collection.Records[index].NewData.TargetObjectDisplayName__c = actions_collection.Records[index].MetaDataObjects.Records[0].NewData[actions_collection.Records[index].NewData.TargetObjectAPIName__c];
+        } else {
+            actions_collection.Records[index].NewData.TargetObjectDisplayName__c = actions_collection.Records[index].NewData.TargetObjectAPIName__c;
+        }
+
+        // Empty field list
+        actions_collection.Records[index].MetaDataObjectsFields = {};
+        actions_collection.Records[index].MetaDataObjectsFields.Records = [];
+
+        // Validate if Object is selected and send request
+        if (actions_collection.Records[index].NewData.TargetObjectAPIName__c != '') {
+
+            // Start progress loader
+            $scope.spinner_show('Retrieving Target Fields...');
+
+            SFUI.getData('getMetaDataObjectFieldsById', connection_selected.NewData.Id, null, null, actions_collection.Records[index].NewData.TargetObjectAPIName__c, null, function (result, event) {
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store rules in container
+                    actions_collection.Records[index].MetaDataObjectsFields = result;
+
+                    // Resolve promise
+                    d.resolve();
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error);
+
+                    // Set empty MetaDataObjectsFields
+                    actions_collection.Records[index].MetaDataObjectsFields = {};
+                    actions_collection.Records[index].MetaDataObjectsFields.Records = [];
+
+                    // Resolve promise
+                    d.resolve();
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+        } else {
+
+            // Resolve promise
+            d.resolve();
+
+        }
+
+        // Return promise
+        return d.promise();
+
+    }
+
+    // Edit rule
+    $scope.rules_edit = function (id) {
+        $state.go('rules-editor', {id: id});
+    }
+
+    // Store rule
+    $scope.store = function () 
+    {
+
+        // Start progress loader
+        $scope.spinner_show('Saving rule data...');
+        
+        //9-18-2016 BMORGAN - Fixes for https://github.com/Cloudaction/actionHub-3/issues/117 & 
+        $scope.rule.Status = null;
+        // Post data
+        SFUI.postData('saveRule', SFUI.abstract_data_remove('Rules', $scope.rule), function (result, event) 
+        {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+            
+            // Success callback
+            if ((result.Error == '' && event.statusCode < 400) || (result.Error != '' && event.statusCode < 400 && result.Status == 'ERROR')) 
+            {
+
+                // Add UI flags
+                result = SFUI.abstract_data_add('Rules', result);
+
+                // Push success message toast
+                if(result.Status != 'ERROR')
+                {
+	                ngToast.success({
+	                    content: 'Rule saved successfully!',
+	                    dismissOnTimeout: true
+	                });
+	                // Apply scope changes
+	                $scope.$apply();
+            		// Redirect to Rule editor
+                	$state.go('rules-editor', {id: result.Records[0].NewData.Id});
+                	
+	            }
+            	else
+            	{
+            		//Ignore the rule data that was returned and use what was on the form.
+            		$scope.$apply();
+            		ngToast.danger(result.Error);
+            	}
+            	
+                
+            }
+            else 	// Failure callback
+            {		
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Set rule activation
+                if (result.Records[0].NewData.Active__c == 'true') 
+                {
+                    $scope.rule.Records[0].NewData.Active__c = true;
+                }
+                if (result.Records[0].NewData.Active__c == 'false') 
+                {
+                    $scope.rule.Records[0].NewData.Active__c = false;
+                }
+
+                // Apply scope changes
+                $scope.$apply();
+            }
+        });
+
+    }
+
+ // Add field (Response or Field Mapping)
+    $scope.fields_add = function (field_type, action_index) {
+        var field_type_display = '';
+        if (field_type == 'FieldMappings') {
+            field_type_display = 'Field Mapping';
+        }
+        if (field_type == 'ResponseFields') {
+            field_type_display = 'Response Mapping';
+        }
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        var fields_collection = $filter('filter')(actions_collection.Records[action_index].ChildDataObjects, {SourceObject: field_type}, true)[0];
+        var next_display_order = fields_collection.Records.length;
+        var field_data = SFUI.abstract_data_new('Field');
+        field_data.NewData.DisplayOrder__c = next_display_order;
+        field_data.NewData.Type__c = field_type_display;
+        fields_collection.Records.push(field_data);
+    }
+
+    // Remove field (Response or Field Mapping)
+    $scope.fields_remove = function (field_type, action_index, field_index) {
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        var fields_collection = $filter('filter')(actions_collection.Records[action_index].ChildDataObjects, {SourceObject: field_type}, true)[0];
+        
+        //Fix for PR00000172
+        //fields_collection.Records is not ordered by DisplayOrder__c when it is first located.  After one field is removed, they are ordered correctly.
+        fields_collection.Records.sort(function(a, b) {
+    		return parseFloat(a.NewData["DisplayOrder__c"]) - parseFloat(b.NewData["DisplayOrder__c"]);
+		});
+		//End PR00000172O
+		
+        fields_collection.Records.splice(field_index, 1);
+        $scope.fields_reindex(field_type, action_index);
+    }
+
+    // Re-index fields
+    $scope.fields_reindex = function (field_type, action_index) {
+        var actions_collection = $filter('filter')($scope.rule.Records[0].ChildDataObjects, {SourceObject: 'Action__c'}, true)[0];
+        var fields_collection = $filter('filter')(actions_collection.Records[action_index].ChildDataObjects, {SourceObject: field_type}, true)[0];
+        angular.forEach(fields_collection.Records, function (field, key) {
+            field.NewData.DisplayOrder__c = key;
+        });
+    }
+
+    // Field display name update
+    $scope.field_display_name_update = function (field_type, action_index, field_index) {
+        var actions_collection = $scope.rule.Records[0].Actions;
+        if (field_type == 'FieldMappings') {
+            var fields_collection = actions_collection[action_index].FieldMappings;
+            fields_collection[field_index].NewData.DisplayName__c = actions_collection[action_index].MetaDataObjectsFields.Records[0].NewData[fields_collection[field_index].NewData.APIName__c];
+        }
+        if (field_type == 'ResponseFields') {
+            var fields_collection = actions_collection[action_index].ResponseMappings;
+            fields_collection[field_index].NewData.DisplayName__c = $scope.connection_adapter_fields.Records[0].NewData[fields_collection[field_index].NewData.APIName__c];
+        }
+    }
+
+    // Field display name replicate
+    $scope.field_display_name_replicate = function (field_type, action_index, field_index) {
+        var actions_collection = $scope.rule.Records[0].Actions;
+        if (field_type == 'FieldMappings') {
+            var fields_collection = actions_collection[action_index].FieldMappings;
+        }
+        if (field_type == 'ResponseFields') {
+            var fields_collection = actions_collection[action_index].ResponseMappings;
+        }
+        fields_collection[field_index].NewData.DisplayName__c = fields_collection[field_index].NewData.APIName__c;
+    }
+
+    // Open expression builder
+    $scope.eb_open = function (collection, index, field, value, parent_index, connection_id, object_api_name) {
+
+        // Set Properties
+        $scope.expression_builder_props.collection = collection;
+        $scope.expression_builder_props.index = index;
+        $scope.expression_builder_props.parent_index = parent_index;
+        $scope.expression_builder_props.field = field;
+        $scope.expression_builder_props.connection_id = connection_id;
+        $scope.expression_builder_props.object_api_name = object_api_name;
+        $scope.expression_builder_props.toolbar = true;
+        $scope.eb_output = value;
+
+        // Get initial data
+        if ($scope.expression_builder_params.base_data_loaded == false) {
+            $scope.get_mappings().then(function () {
+                return $scope.get_custom_functions();
+            }).then(function () {
+                $scope.expression_builder_params.base_data_loaded = true;
+                $scope.spinner_hide();
+            });
+        }
+
+        // Fetch fields
+        $scope.fields = {};
+        $scope.fields.Records = [];
+        $scope.fields.UIFlags = {};
+        $scope.fields.UIFlags.expanded = false;
+        if ($scope.expression_builder_props.collection == 'Conditions') {
+            if ($scope.connection_adapter_fields.Records.length > 0) {
+                angular.forEach($scope.connection_adapter_fields.Records[0].NewData, function (field, key) {
+                    $scope.fields.Records.push({item_key: key, item_value: field});
+                });
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'Parameters') {
+            $scope.expression_builder_props.toolbar = false;
+            if ($scope.rule.Records[0].Actions[parent_index].MetaDataObjectsFields.Records.length > 0) {
+                angular.forEach($scope.rule.Records[0].Actions[parent_index].MetaDataObjectsFields.Records[0].NewData, function (field, key) {
+                    $scope.fields.Records.push({item_key: key, item_value: field});
+                });
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'FieldMappings' && $scope.expression_builder_props.field == 'left_exp') {
+            $scope.expression_builder_props.toolbar = false;
+            if ($scope.rule.Records[0].Actions[parent_index].MetaDataObjectsFields.Records.length > 0) {
+                angular.forEach($scope.rule.Records[0].Actions[parent_index].MetaDataObjectsFields.Records[0].NewData, function (field, key) {
+                    $scope.fields.Records.push({item_key: key, item_value: field});
+                });
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'FieldMappings' && $scope.expression_builder_props.field == 'right_exp') {
+            if ($scope.connection_adapter_fields.Records.length > 0) {
+                angular.forEach($scope.connection_adapter_fields.Records[0].NewData, function (field, key) {
+                    $scope.fields.Records.push({item_key: key, item_value: field});
+                });
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'ResponseMappings' && $scope.expression_builder_props.field == 'left_exp') {
+            $scope.expression_builder_props.toolbar = false;
+            if ($scope.connection_adapter_fields.Records.length > 0) {
+                angular.forEach($scope.connection_adapter_fields.Records[0].NewData, function (field, key) {
+                    $scope.fields.Records.push({item_key: key, item_value: field});
+                });
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'ResponseMappings' && $scope.expression_builder_props.field == 'right_exp') {
+            if ($scope.rule.Records[0].Actions[parent_index].MetaDataObjectsFields.Records.length > 0) {
+                angular.forEach($scope.rule.Records[0].Actions[parent_index].MetaDataObjectsFields.Records[0].NewData, function (field, key) {
+                    $scope.fields.Records.push({item_key: key, item_value: field});
+                });
+            }
+        }
+
+        if ($scope.expression_builder_props.toolbar) {
+
+            // Load completers
+            var langTools = ace.require("ace/ext/language_tools");
+
+            // Build field completer
+            var field_completer = {
+                getCompletions: function(editor, session, pos, prefix, callback) {
+                    if (prefix.length === 0) { callback(null, []); return }
+                    if ($scope.fields.Records.length > 0) {
+                        var fields_list = $scope.fields.Records.map(function (field) {
+                            var new_map = {};
+                            new_map.value = field.item_value;
+                            new_map.output = "{NEW:"+field.item_key+"}";
+                            new_map.score = 1;
+                            new_map.meta = "Field";
+                            new_map.completer = field_completer;
+                            return new_map;
+                        })
+                        callback(null, fields_list);
+                    }
+                },
+                insertMatch: function(editor, data) {
+                    if (editor.completer.completions.filterText) {
+                        var ranges = editor.selection.getAllRanges();
+                        for (var i = 0, range; range = ranges[i]; i++) {
+                            range.start.column -= editor.completer.completions.filterText.length;
+                            editor.session.remove(range);
+                        }
+                    }
+                    editor.execCommand("insertstring", data.output);
+                }
+            }
+
+            // Build mapping completer
+            var mapping_completer = {
+                getCompletions: function(editor, session, pos, prefix, callback) {
+                    if (prefix.length === 0) { callback(null, []); return }
+                    if ($scope.mappings.Records.length > 0) {
+                        var mappings_list = $scope.mappings.Records.map(function (mapping) {
+                            var new_map = {};
+                            new_map.value = mapping.NewData.MappingName__c;
+                            new_map.output = "{MAPPING:\""+mapping.NewData.MappingName__c+"\",\"InputValue\"}";
+                            new_map.score = 0.7;
+                            new_map.meta = "Mapping";
+                            new_map.completer = mapping_completer;
+                            return new_map;
+                        })
+                        callback(null, mappings_list);
+                    }
+                },
+                insertMatch: function(editor, data) {
+                    if (editor.completer.completions.filterText) {
+                        var ranges = editor.selection.getAllRanges();
+                        for (var i = 0, range; range = ranges[i]; i++) {
+                            range.start.column -= editor.completer.completions.filterText.length;
+                            editor.session.remove(range);
+                        }
+                    }
+                    editor.execCommand("insertstring", data.output);
+                }
+            }
+
+            // Build mapping completer
+            var function_completer = {
+                getCompletions: function(editor, session, pos, prefix, callback) {
+                    if (prefix.length === 0) { callback(null, []); return }
+                    var functions_list = [];
+                    for(i=0; i<=$scope.custom_functions.Records.length; i++) {
+                        if (angular.isDefined($scope.custom_functions.Records[i])) {
+                            for(fun_i=0; fun_i<=$scope.custom_functions.Records[i].ChildDataObjects[0].Records.length; fun_i++) {
+                                var new_map = {};
+                                if (angular.isDefined($scope.custom_functions.Records[i].ChildDataObjects[0].Records[fun_i])) {
+                                    new_map.value = $scope.custom_functions.Records[i].ChildDataObjects[0].Records[fun_i].NewData.Name;
+                                    new_map.output = "{"+$scope.custom_functions.Records[i].NewData.NamespacePrefix+$scope.custom_functions.Records[i].NewData.Prefix+$scope.custom_functions.Records[i].ChildDataObjects[0].Records[fun_i].NewData.Name+":";
+                                    angular.forEach($scope.custom_functions.Records[i].ChildDataObjects[0].Records[fun_i].ChildDataObjects[0].Records, function (arg, key) {
+                                        new_map.output = new_map.output+arg.NewData.Label+',';
+                                    });
+                                    new_map.output = new_map.output+"}";
+                                    new_map.output = new_map.output.replace(',}', '}');
+                                    new_map.score = 0.5;
+                                    new_map.meta = $scope.custom_functions.Records[i].ChildDataObjects[0].Records[fun_i].NewData.DisplayGroup;
+                                    new_map.completer = function_completer;
+                                    functions_list.push(new_map);
+                                }
+                            }
+                        }
+                    }
+                    callback(null, functions_list);
+                },
+                insertMatch: function(editor, data) {
+                    if (editor.completer.completions.filterText) {
+                        var ranges = editor.selection.getAllRanges();
+                        for (var i = 0, range; range = ranges[i]; i++) {
+                            range.start.column -= editor.completer.completions.filterText.length;
+                            editor.session.remove(range);
+                        }
+                    }
+                    editor.execCommand("insertstring", data.output);
+                }
+            }
+
+            // Load all completers
+            langTools.addCompleter(field_completer);
+            langTools.addCompleter(mapping_completer);
+            langTools.addCompleter(function_completer);
+
+        } else {
+
+            // Load completers
+            var langTools = ace.require("ace/ext/language_tools");
+
+            // Build empty list
+            var empty_completer = {
+                getCompletions: function(editor, session, pos, prefix, callback) {
+                    callback(null, []);
+                }
+            }
+
+            // Load all completers
+            langTools.setCompleters(empty_completer);
+
+        }
+
+        // Open modal window
+        $scope.modals_open('expression_builder');
+    }
+
+    // Save Expression builder
+    $scope.eb_save = function () {
+        var _session = $scope.editor.getSession();
+        var _document = _session.getDocument();
+        if ($scope.expression_builder_props.collection == 'Parameters') {
+            if ($scope.expression_builder_props.field == 'right_exp') {
+                $scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].ActionParameters[$scope.expression_builder_props.index].NewData.Value__c = _document.getValue();
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'Conditions') {
+            if ($scope.expression_builder_props.field == 'left_exp') {
+                $scope.rule.Records[0].Conditions[$scope.expression_builder_props.index].NewData.LeftExpression__c = _document.getValue();
+            }
+            if ($scope.expression_builder_props.field == 'right_exp') {
+                $scope.rule.Records[0].Conditions[$scope.expression_builder_props.index].NewData.RightExpression__c = _document.getValue();
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'FieldMappings') {
+            if ($scope.expression_builder_props.field == 'left_exp') {
+                $scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].FieldMappings[$scope.expression_builder_props.index].NewData.APIName__c = _document.getValue();
+                $scope.field_display_name_update('FieldMappings', $scope.expression_builder_props.parent_index, $scope.expression_builder_props.index);
+                if ($scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].FieldMappings[$scope.expression_builder_props.index].NewData.DisplayName__c == undefined) {
+                    $scope.field_display_name_replicate('FieldMappings', $scope.expression_builder_props.parent_index, $scope.expression_builder_props.index);
+                }
+                console.log($scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].FieldMappings[$scope.expression_builder_props.index].NewData.DisplayName__c);
+            }
+            if ($scope.expression_builder_props.field == 'right_exp') {
+                $scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].FieldMappings[$scope.expression_builder_props.index].NewData.Value__c = _document.getValue();
+            }
+        }
+        if ($scope.expression_builder_props.collection == 'ResponseMappings') {
+            if ($scope.expression_builder_props.field == 'left_exp') {
+                $scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].ResponseMappings[$scope.expression_builder_props.index].NewData.APIName__c = _document.getValue();
+                $scope.field_display_name_update('ResponseFields', $scope.expression_builder_props.parent_index, $scope.expression_builder_props.index);
+                if ($scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].ResponseMappings[$scope.expression_builder_props.index].NewData.DisplayName__c == undefined) {
+                    $scope.field_display_name_replicate('ResponseFields', $scope.expression_builder_props.parent_index, $scope.expression_builder_props.index);
+                }
+                console.log($scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].ResponseMappings[$scope.expression_builder_props.index].NewData.DisplayName__c);
+            }
+            if ($scope.expression_builder_props.field == 'right_exp') {
+                $scope.rule.Records[0].Actions[$scope.expression_builder_props.parent_index].ResponseMappings[$scope.expression_builder_props.index].NewData.Value__c = _document.getValue();
+            }
+        }
+        $scope.modals_close('expression_builder');
+    }
+
+    // Toggle fields
+    $scope.ebfilters_fields_toggle = function (index) {
+        if ($scope.fields.UIFlags.expanded) {
+            $scope.fields.UIFlags.expanded = false;
+        } else {
+            $scope.fields.UIFlags.expanded = true;
+        }
+    }
+
+    // Toggle mappings
+    $scope.ebfilters_mappings_toggle = function (index) {
+        if ($scope.mappings.UIFlags.expanded) {
+            $scope.mappings.UIFlags.expanded = false;
+        } else {
+            $scope.mappings.UIFlags.expanded = true;
+        }
+    }
+
+    // Toggle functions
+    $scope.ebfilters_functions_toggle = function (index) {
+        if ($scope.custom_functions.Records[index].UIFlags.expanded) {
+            $scope.custom_functions.Records[index].UIFlags.expanded = false;
+        } else {
+            $scope.custom_functions.Records[index].UIFlags.expanded = true;
+        }
+    }
+
+    // Toggle function groups
+    $scope.ebfilters_functions_group_toggle = function (key) {
+        if ($scope.function_groups[key]) {
+            $scope.function_groups[key] = false;
+        } else {
+            $scope.function_groups[key] = true;
+        }
+    }
+
+    // Add new mapping
+    $scope.mappings_add = function() {
+        $scope.mapping_params.edit_mode = false;
+        $scope.mapping = SFUI.abstract_data_new('Mapping');
+        $scope.modals_open('mapping_builder');
+    }
+
+    // Edit existing mapping
+    $scope.mappings_edit = function (id) {
+
+        // Set mapping edit mode
+        $scope.mapping_params.edit_mode = true;
+
+        // Start progress loader
+        $scope.spinner_show('Retrieving mapping data...');
+
+        // Fetch all rules
+        SFUI.getData('getMappingDetails', id, null, null, null, null, function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Store rules in container
+                $scope.mapping = SFUI.abstract_data_add('Mappings', result);
+
+                // Open modal window
+                $scope.modals_open('mapping_builder');
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    // Add mapping detail
+    $scope.mappings_details_add = function () {
+        var mapping_detail_new = SFUI.abstract_data_new('MappingDetail');
+        mapping_detail_new.NewData.DisplayOrder__c = $scope.mapping.Records.length;
+        $scope.mapping.Records.push(mapping_detail_new);
+    }
+
+    // Remove mapping detail
+    $scope.mappings_details_remove = function (index) {
+        $scope.mapping.Records.splice(index, 1);
+        $scope.mappings_details_reindex();
+    }
+
+    // Re-index mapping details
+    $scope.mappings_details_reindex = function () {
+        angular.forEach($scope.mapping.Records, function (value, key) {
+            value.NewData.DisplayOrder__c = key;
+        });
+    }
+
+    // Mapping details sort listener object
+    $scope.mappings_details_sort_listener = {
+        orderChanged: function(event) {
+            $scope.mappings_details_reindex();
+        }
+    };
+
+    // Save mapping
+    $scope.mappings_save = function () {
+
+        // Start progress loader
+        $scope.spinner_show('Saving mappings data...');
+
+        // Post data
+        SFUI.postData('saveMappings', SFUI.abstract_data_remove('Mappings', $scope.mapping), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Add UI flags
+                // result = SFUI.abstract_data_add('Mapping', result);
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Mapping saved successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Close modal window
+                $scope.modals_close('mapping_builder');
+
+                // Apply scope changes
+                $scope.$apply();
+
+                // Fetch Mappings
+                SFUI.getData('getMappings', null, null, null, null, null, function (result, event) {
+
+                    // Success callback
+                    if (result.Error == '' && event.statusCode < 400) {
+
+                        // Store mappings in container
+                        $scope.mappings = SFUI.abstract_data_add('Mappings', result);
+                        $scope.mappings.UIFlags = {};
+                        $scope.mappings.UIFlags.expanded = true;
+
+                        // Apply scope changes
+                        $scope.$apply();
+
+                    }
+
+                    // Failure callback
+                    else {
+
+                        // Push error message toast
+                        ngToast.danger(result.Error);
+
+                        // Apply scope changes
+                        $scope.$apply();
+
+                    }
+
+                });
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.action_find_field_availibility = function (search_string, key) {
+        var field_available = $scope.rule.filterActions[key].MetaDataObjectsFields[0].NewData.indexOf(search_string);
+        if (field_available >= 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    $scope.aceLoaded = function (editor) {
+        $scope.editor = editor;
+        var _session = $scope.editor.getSession();
+        _session.setUseWrapMode($scope.editor_params.wrap);
+        $scope.editor.focus();
+    };
+
+    $scope.editor_toggle_wrap = function () {
+        var _session = $scope.editor.getSession();
+        if (_session.getUseWrapMode()) {
+            _session.setUseWrapMode(false);
+        } else {
+            _session.setUseWrapMode(true);
+        }
+    }
+
+    $scope.editor_insert = function (type, value, version) {
+        var _session = $scope.editor.getSession();
+        var _selection = $scope.editor.getSelection();
+        var _document = _session.getDocument();
+        var _position = _selection.getRange();
+        var _text = '';
+
+        if (type == 'Field') {
+            if (version == 'new') {
+                if ($scope.expression_builder_props.collection == 'FieldMappings' && $scope.expression_builder_props.field == 'left_exp' || $scope.expression_builder_props.collection == 'ResponseMappings' && $scope.expression_builder_props.field == 'left_exp') {
+                    _text = value;
+                } else {
+                    _text = "{NEW:"+value+"}";
+                }
+            }
+            if (version == 'old') {
+                _text = "{OLD:"+value+"}";
+            }
+        }
+        if (type == 'Mapping') {
+            _text = "{MAPPING:\""+value+"\",\"InputValue\"}";
+        }
+        if (type == 'Function') {
+            _text = "{"+$scope.custom_functions.Records[version].NewData.NamespacePrefix+$scope.custom_functions.Records[version].NewData.Prefix+value.NewData.Name+":";
+            angular.forEach(value.ChildDataObjects[0].Records, function (arg, key) {
+                _text = _text+arg.NewData.Label+',';
+            });
+            _text = _text+"}";
+            _text = _text.replace(',}', '}');
+        }
+
+        if (_position.start.row == _position.end.row && _position.start.column == _position.end.column) {
+            _document.insert({row: _position.start.row, column: _position.start.column}, _text);
+        } else {
+            _document.replace(_position, _text);
+        }
+
+        $scope.editor.focus();
+
+    }
+
+    $scope.page_print = function () {
+        // angular.forEach($scope.actions, function (action, key) {
+        //  action.UIFlags.expanded = true;
+        // });
+        $window.print();
+    }
+
+    $scope.print_select_all = function () {
+        angular.forEach($scope.rules.Records, function (rule, key) {
+            rule.UIFlags.expanded = true;
+            angular.forEach(rule.ChildDataObjects, function (dataobj, key) {
+                if (dataobj.SourceObject == 'Action__c') {
+                    angular.forEach(dataobj.Records, function (action, key) {
+                        action.UIFlags.expanded = true;
+                    });
+                }
+            })
+        })
+
+        $scope.print.select_all = true;
+    }
+
+    $scope.print_select_single = function (index) {
+
+        $scope.rules.Records[index].UIFlags.expanded = true;
+        angular.forEach($scope.rules.Records[index].ChildDataObjects, function (dataobj, key) {
+            if (dataobj.SourceObject == 'Action__c') {
+                angular.forEach(dataobj.Records, function (action, key) {
+                    action.UIFlags.expanded = true;
+                });
+            }
+        })
+    }
+
+    $scope.print_deselect_single = function (index) {
+
+        $scope.rules.Records[index].UIFlags.expanded = false;
+        angular.forEach($scope.rules.Records[index].ChildDataObjects, function (dataobj, key) {
+            if (dataobj.SourceObject == 'Action__c') {
+                angular.forEach(dataobj.Records, function (action, key) {
+                    action.UIFlags.expanded = false;
+                });
+            }
+        })
+    }
+
+    $scope.print_deselect_all = function () {
+        $scope.print.select_all = false;
+        angular.forEach($scope.rules.Records, function (rule, key) {
+            rule.UIFlags.expanded = false;
+            angular.forEach(rule.ChildDataObjects, function (dataobj, key) {
+                if (dataobj.SourceObject == 'Action__c') {
+                    angular.forEach(dataobj.Records, function (action, key) {
+                        action.UIFlags.expanded = false;
+                    });
+                }
+            })
+        })
+    }
+
+    $scope.print_open = function () {
+
+        angular.forEach($scope.rules.Records, function (rule, key) {
+            if (rule.UIFlags.expanded == true) {
+                angular.forEach(rule.ChildDataObjects, function (dataobj, key) {
+                    if (dataobj.SourceObject == 'Action__c') {
+                        angular.forEach(dataobj.Records, function (action, key) {
+                            action.UIFlags.expanded = true;
+                        });
+                    }
+                })
+            }
+        })
+
+        $scope.modals_open('rules_print');
+    }
+
+    $scope.status_toggle = function (index) {
+
+        // Pull enabled/disabled data
+        $scope.rule = angular.copy($scope.rules);
+        $scope.rule.Records = [angular.copy($scope.filteredRules[index])];
+
+        // Start progress loader
+        $scope.spinner_show('Saving rule data...');
+
+        // Post data
+        SFUI.postData('saveRule', SFUI.abstract_data_remove('Rules', $scope.rule), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Rule saved successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Reset the toggle button
+                if ($scope.filteredRules[index].NewData.Active__c == true) {
+                    $scope.filteredRules[index].NewData.Active__c = false;
+                } else {
+                    $scope.filteredRules[index].NewData.Active__c = true;
+                }
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.rules_copy = function (id, state) {
+
+        // Pull enabled/disabled data
+        if (state == 'explorer') {
+            $scope.rule = angular.copy($scope.rules);
+            $scope.rule.Records = $filter('filter')($scope.filteredRules, {NewData: {Id: id}}, true);
+        }
+
+        // Start progress loader
+        $scope.spinner_show('Duplicating data...');
+
+        // Post data
+        SFUI.postData('copyRule', SFUI.abstract_data_remove('Rules', $scope.rule), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Rule copied successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Refresh the list of rules
+                if (state == 'explorer') {
+                    $state.reload();
+                }
+
+                // Redirect to Rule editor
+                if (state == 'builder') {
+                    $state.go('rules-editor', {id: result.Records[0].NewData.Id});
+                }
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Refresh the list of rules
+                if (state == 'explorer') {
+                    $state.reload();
+                }
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.delete = function () {
+        $scope.modals_open('delete_confirm');
+    }
+
+    $scope.delete_cancel = function () {
+        $scope.modals_close('delete_confirm');
+    }
+
+    $scope.delete_confirm = function () {
+
+        // Start progress loader
+        $scope.spinner_show('Deleting data...');
+
+        // Post data
+        SFUI.postData('deleteRule', SFUI.abstract_data_remove('Rules', $scope.rule), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Rule deleted successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Close modal window
+                $scope.modals_close('delete_confirm');
+
+                // Send back to Rules explorer
+                $state.go('rules');
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Close modal window
+                $scope.modals_close('delete_confirm');
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+
+    }
+
+    $scope.rules_expand_all = function () {
+        angular.forEach($scope.rules.Records, function (rule, key) {
+            rule.UIFlags.expanded = true;
+            angular.forEach(rule.ChildDataObjects, function (dataobj, key) {
+                if (dataobj.SourceObject == 'Action__c') {
+                    angular.forEach(dataobj.Records, function (action, key) {
+                        action.UIFlags.expanded = true;
+                    });
+                }
+            })
+        });
+    }
+
+    $scope.rules_collapse_all = function () {
+        angular.forEach($scope.rules.Records, function (rule, key) {
+            rule.UIFlags.expanded = false;
+            angular.forEach(rule.ChildDataObjects, function (dataobj, key) {
+                if (dataobj.SourceObject == 'Action__c') {
+                    angular.forEach(dataobj.Records, function (action, key) {
+                        action.UIFlags.expanded = false;
+                    });
+                }
+            })
+        });
+    }
+
+    $scope.$on('rules_expand_all', function(event, args) {
+        $scope.rules_expand_all();
+    });
+
+    $scope.$on('rules_collapse_all', function(event, args) {
+        $scope.rules_collapse_all();
+    });
+
+    $scope.index();
+
+    return $scope;
+
+}]);
+
+moduleControllers
+    .controller("SettingsController", ['$scope', '$http', '$location', '$state', '$stateParams', '$interval', '$sce', '$filter', 'ngProgressLite', 'ngToast', 'SFUI', function($scope, $http, $location, $state, $stateParams, $interval, $sce, $filter, ngProgressLite, ngToast, SFUI) {
+
+    $scope.settings_uiflags = {};
+
+    $scope.index = function () {
+
+        if ($state.is('settings')) {
+
+            // Set menu active item
+            $scope.menu.active = {id: 4, label: 'Settings', icon: $sce.trustAsResourceUrl('images/icons/utility/symbols.svg#settings'), location: 'settings'};
+
+            // Start progress loader
+            $scope.spinner_show('Retrieving settings data...');
+
+            // Get all settings
+            SFUI.getData('getSettings', null, null, null, null, null, function (result, event) {
+
+                // Complete progress loader
+                $scope.spinner_hide();
+
+                // Success callback
+                if (result.Error == '' && event.statusCode < 400) {
+
+                    // Store settings in container
+                    $scope.settings = SFUI.abstract_data_add('Settings', result);
+                    $scope.settings_uiflags.group_active = $scope.settings.Records[0].NewData.DisplayGroup__c;
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+                // Failure callback
+                else {
+
+                    // Push error message toast
+                    ngToast.danger(result.Error);
+
+                    // Apply scope changes
+                    $scope.$apply();
+
+                }
+
+            });
+
+        }
+    };
+
+    $scope.settings_save = function () {
+
+        // Start progress loader
+        $scope.spinner_show('Saving settings data...');
+
+        // Post data
+        SFUI.postData('saveSettings', SFUI.abstract_data_remove('Settings', $scope.settings), function (result, event) {
+
+            // Complete progress loader
+            $scope.spinner_hide();
+
+            // Success callback
+            if (result.Error == '' && event.statusCode < 400) {
+
+                // Merge updated ActionDataObject
+                $scope.settings = SFUI.abstract_data_add('Settings', result);
+
+                // Push success message toast
+                ngToast.success({
+                    content: 'Settings saved successfully!',
+                    dismissOnTimeout: true
+                });
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+            // Failure callback
+            else {
+
+                // Push error message toast
+                ngToast.danger(result.Error);
+
+                // Apply scope changes
+                $scope.$apply();
+
+            }
+
+        });
+    }
+
+    $scope.tabs_navigate = function (key) {
+        $scope.settings_uiflags.group_active = key;
+    }
+
+    $scope.index();
+
+    return $scope;
+
+}]);
+
+moduleApp
+    .filter('highlight', function($sce) {
+        return function(data_text, search_string) {
+            if (data_text && search_string) {
+                data_text = data_text.replace(new RegExp('('+search_string+')', 'gi'),'<span class="search-highlighted">$1</span>');
+            }
+            return $sce.trustAsHtml(data_text);
+        }
+    })
+
+moduleApp
+    .filter('search', function() {
+        return function(data_set, search_string) {
+            if (search_string != '') {
+                return data_set.filter(function (rule) {
+
+                    // Convert the term to lower case
+                    search_string = search_string.toLowerCase();
+
+                    // Get count of matches
+                    var rule_term_count = 0;
+
+                    // Search in Rule
+                    if (angular.isDefined(rule.NewData.RuleName__c) && rule.NewData.RuleName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                    if (angular.isDefined(rule.NewData.Notes__c) && rule.NewData.Notes__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+
+                    // Search in Conditions and Actions
+                    angular.forEach(rule.ChildDataObjects, function (child_data, key) {
+                        if (child_data.SourceObject == 'RuleConditions__c') {
+                            angular.forEach(child_data.Records, function (condition, key) {
+                                if (angular.isDefined(condition.NewData.LeftExpression__c) && condition.NewData.LeftExpression__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                if (angular.isDefined(condition.NewData.RightExpression__c) && condition.NewData.RightExpression__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                            });
+                        }
+                        if (child_data.SourceObject == 'Action__c') {
+                            angular.forEach(child_data.Records, function (action, key) {
+
+                                if (angular.isDefined(action.NewData.ActionName__c) && action.NewData.ActionName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                if (angular.isDefined(action.NewData.TargetConnectionName__c) && action.NewData.TargetConnectionName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                if (angular.isDefined(action.NewData.TargetObjectDisplayName__c) && action.NewData.TargetObjectDisplayName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+
+                                // Search in Action Child Objects
+                                angular.forEach(action.ChildDataObjects, function (action_child_data, key) {
+                                    if (action_child_data.SourceObject == 'ActionParameters') {
+                                        angular.forEach(action_child_data.Records, function (parameter, key) {
+                                            if (angular.isDefined(parameter.NewData.DisplayName__c) && parameter.NewData.DisplayName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                            if (angular.isDefined(parameter.NewData.Value__c) && parameter.NewData.Value__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                        });
+                                    }
+                                    if (action_child_data.SourceObject == 'FieldMappings') {
+                                        angular.forEach(action_child_data.Records, function (field, key) {
+                                            if (angular.isDefined(field.NewData.DisplayName__c) && field.NewData.DisplayName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                            if (angular.isDefined(field.NewData.Value__c) && field.NewData.Value__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                        });
+                                    }
+                                    if (action_child_data.SourceObject == 'ResponseFields') {
+                                        angular.forEach(action_child_data.Records, function (field, key) {
+                                            if (angular.isDefined(field.NewData.DisplayName__c) && field.NewData.DisplayName__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                            if (angular.isDefined(field.NewData.Value__c) && field.NewData.Value__c.toLowerCase().indexOf(search_string) >= 0) rule_term_count++;
+                                        });
+                                    }
+
+                                });
+
+                            });
+                        }
+                    });
+
+                    if (rule_term_count > 0) {
+                        return true;
+                    }
+
+                })
+            } else {
+                return data_set;
+            }
+        }
+    })
+
+moduleServices
+    .factory("SFUI", ['$http', '$location', '$state', '$interval', '$sce', '$filter', function($http, $location, $state, $interval, $sce, $filter) {
+
+        var SFUI = {};
+
+        //New for making callouts to a live Salesforce organization
+        /*
+            Querystring arguments:
+                operationType
+                objectId
+                nameSpace
+                objectName
+                displayGroup
+                className
+
+            operationType:
+                getActionDetails(objectId);
+                getActions();
+                getActionsParameters(objectId);
+                getAdapters();
+                getAllActionDetails();
+                getAllRuleConditions();
+                getClassCustomFunctions(nameSpace, className);
+                getClassGroupCustomFunctions(nameSpace, className, displayGroup);
+                getConnectionParameters(objectId);
+                getConnections();
+                getCustomFunctionClasses();
+                getCustomFunctions();
+                getMappingDetails(objectId);
+                getMappings();
+                getMetaDataObjectFields(nameSpace, className, objectName);
+                getMetaDataObjects(nameSpace, className);
+                getRule(objectId);
+                getRuleActions(objectId);
+                getRuleConditions(objectId);
+                getRules();
+                getSettings();
+        */
+        /*
+            "getData" now reaches out to a Salesforce organization with actionHub core components installed.
+            This gives this local environment access to live data.
+            Feel free to alter the signature, but note that the REST web method will require the correct values in the query string.
+        */
+
+        var salesforceURL = "https://bmcremedyforcetrial-146d121de50.secure.force.com/actionHub/services/apexrest/actionHubUIREST?";
+
+        /*
+            Example call to the method:  This returns a rule with all of its information:
+
+            getData("getRule", "");
+
+            To get all rules: [TODO: Verify the return data;]
+            getData("getRules");
+
+        */
+
+        SFUI.getData = function getData(operationType, objectId, nameSpace, className, objectName, displayGroup, successCallback)
+        {
+
+            var operationType= (operationType ? operationType : "");
+            var objectId= (objectId ? objectId : "");
+            var nameSpace= (nameSpace  ? nameSpace : "");
+            var className= (className ? className : "");
+            var objectName= (objectName ? objectName : "");
+            var displayGroup= (displayGroup ? displayGroup : "");
+
+            switch(operationType)
+            {
+                case "getRule":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            objectId,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+                case "getMappingDetails":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            objectId,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                case "getMetaDataObjects":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            nameSpace, className,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+                case "getMetaDataObjectFields":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            nameSpace, className, objectName,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+                case "getMetaDataObjectsById":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            objectId,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+                case "getMetaDataObjectFieldsById":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            objectId, objectName,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+                case "getClassCustomFunctions":
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            nameSpace, className,
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+                default:
+                {
+                    Visualforce.remoting.Manager.invokeAction(
+                            "{!remotingSpace}." + (operationType ? operationType : ""),
+                            successCallback,
+                            {escape: false}
+                        );
+                }
+                break;
+            }
+
+        }
+
+        /*
+        operationTypes:
+
+        Save a connection:
+        operationType = saveConnection
+        sourceData = ActionDataObject containing 1 Connection__c record, and ChildDataObjects contains ConnectionDetails__c.  This is identical to the ActionDataObject returned by getConnections, but it contains only 1 record for the specific connection being saved.
+
+        Save mappings:
+        operationType = saveMapping
+        sourceData = ActionDataObject containing 1 or more Records.  Each record = 1 Mapping__c record.  This is the same ActionDataObject returned by getMappingDetails.
+                    The records should all have the same MappingName__c value.
+
+        Save a rule
+        operationType = saveRule
+        sourceData  = ActionDataObject containing a single Record for Rule__c. This is identical to the ActionDataObject returned by getRules, but it contains only 1 record for the specific rule being saved.
+                ChildDataObjects[0] = "Conditions__c"
+                    Records[n] = 1 record per Condition
+                ChildDataObjects[1] = "Actions__c"
+                    Records[n] - 1 record per Action
+                        ChildDataObjects[0] = ActionParameters
+                            Records[n] = 1 record per ActionParameter
+                        ChildDataObjects[1] - FieldMappings
+                            Records[n] = 1 record per FieldMapping
+                        ChildDataObjects[2] - ResponseFields
+                            Records[n] = 1 record per ResponseField
+
+        Save all settings
+        operationType = saveSettings
+        sourceData = ActionDataObject with 1 record per setting.  This is the same ActionDataObject that is returned by getSettings.
+
+        To delete a rule:
+        operationType = deleteRule
+        sourceData = An ActionDataObject describing 1 rule (same as the sourceData for "saveRule").
+
+        To delete a connection:
+        operationType = deleteConnection
+        sourceData = An ActionDataObject containing 1 record for the connection to be deleted.  This is identical to the ActionDataObject returned by getConnections, but it contains only 1 record for the specific connection being deleted.
+
+        To delete a mapping group - This deletes the entire group of Mapping__c records that share a MappingName__c value.  TO DELETE A SINGLE Mapping__c record, remove the Mapping__c record from the ActionDataObject result of "getMappingDetails" and then submit it to "saveMapping".
+        operationType = deleteMapping
+        sourceData = An ActionDataObject containing 1 record for each Mapping__c record.  This is identical to the ActionDataObject returned by getMappingDetails.
+
+
+        */
+
+        SFUI.postData = function postData(operationType, sourceData, successCallback)
+        {
+            sourceData = JSON.parse(angular.toJson(sourceData));
+            Visualforce.remoting.Manager.invokeAction(
+                "{!remotingSpace}." + (operationType ? operationType : ""),
+                sourceData,
+                successCallback,
+                {escape: false}
+            );
+        }
+
+        SFUI.abstract_data_new = function (type) {
+
+            var action_data_object = {};
+
+            switch(type)
+            {
+                case 'Rule':
+                {
+                    action_data_object =
+                    {
+                        "Error":"",
+                        "Parameters":{},
+                        "Records":[
+                            {
+                                "ChildDataObjects":[
+                                    {
+                                        "Error":"",
+                                        "Parameters":{},
+                                        "Records":[
+                                            {
+                                                "ChildDataObjects":[
+
+                                                ],
+                                                "NewData":{
+                                                    "Active__c": "true",
+                                                    "DisplayOrder__c":"0",
+                                                    "LeftExpression__c":"",
+                                                    "ComparisonOperator__c":"is equal to",
+                                                    "RightExpression__c":"",
+                                                    "LogicalOperator__c":"AND",
+                                                },
+                                                "OldData":{
+
+                                                }
+                                            }
+                                        ],
+                                        "ResponseFields":{},
+                                        "SourceObject":"RuleConditions__c"
+                                    },
+                                    {
+                                        "Error":"",
+                                        "Parameters":{},
+                                        "Records":[
+                                            {
+                                                "ChildDataObjects":[
+                                                    {
+                                                        "Error":"",
+                                                        "Parameters":{},
+                                                        "Records":[],
+                                                        "ResponseFields":{},
+                                                        "SourceObject":"ActionParameters"
+                                                    },
+                                                    {
+                                                        "Error":"",
+                                                        "Parameters":{},
+                                                        "Records":[
+                                                            {
+                                                                "ChildDataObjects":[],
+                                                                "NewData":{
+                                                                    "APIName__c":"",
+                                                                    "DataType__c":"Text",
+                                                                    "DisplayName__c":"",
+                                                                    "DisplayOrder__c":"0",
+                                                                    "NullEmptyStringHandling__c":"No action",
+                                                                    "Required__c":"false",
+                                                                    "SuppressEmptyString__c":"false",
+                                                                    "SuppressNull__c":"false",
+                                                                    "Type__c":"Field Mapping",
+                                                                    "Value__c":""
+                                                                },
+                                                                "OldData":{}
+                                                            }
+                                                        ],
+                                                        "ResponseFields":{},
+                                                        "SourceObject":"FieldMappings"
+                                                    },
+                                                    {
+                                                        "Error":"",
+                                                        "Parameters":{},
+                                                        "Records":[],
+                                                        "ResponseFields":{},
+                                                        "SourceObject":"ResponseFields"
+                                                    }
+                                                ],
+                                                "NewData":{
+                                                    "ActionName__c":"",
+                                                    "Active__c": true,
+                                                    "AdapterClass__c": "",
+                                                    "Description__c":"",
+                                                    "DisplayOrder__c":"0",
+                                                    "RelaxedExecution__c": false,
+                                                    "RetryInterval__c": 5,
+                                                    "MaxRetries__c": 0,
+                                                    "TargetConnectionId__c":"",
+                                                    "TargetObjectDisplayName__c":"",
+                                                    "TargetObjectAPIName__c":"",
+                                                    "TargetConnectionName__c":""
+                                                },
+                                                "OldData":{}
+                                            }
+                                        ],
+                                        "ResponseFields":{},
+                                        "SourceObject":"Action__c"
+                                    }
+                                ],
+                                "NewData":{
+                                    "Active__c":"false",
+                                    "RuleName__c":"",
+                                    "SourceConnectionId__c":"",
+                                    "SourceConnectionName__c":"",
+                                    "SourceObjectAPIName__c":"",
+                                    "SourceObjectDisplayName__c":"",
+                                    "Notes__c":""
+                                },
+                                "OldData":{}
+                            }
+                        ],
+                        "ResponseFields":{},
+                        "SourceConnection":"InternalAdapter",
+                        "SourceObject":"Rules__c"
+                    }
+
+                }
+                break;
+                case 'Connection':
+                {
+                    action_data_object = {
+                        SourceObject: 'Connection__c',
+                        Error: '',
+                        Records: [
+                            {
+                                NewData: {
+                                    Description__c: '',
+                                    ConnectionName__c: '',
+                                    AdapterId__c: '',
+                                    AdapterName__c: '',
+                                    AdapterClass__c: '',
+                                    UserId__c: '',
+                                    Active__c: 'false'
+                                },
+                                ChildDataObjects: [
+                                    {
+                                        SourceObject: 'ConnectionDetails__c',
+                                        Records: []
+                                    }
+                                ]
+                            }
+                        ]
+                    };
+                }
+                break;
+                case 'Condition':
+                {
+                    action_data_object = {
+                        NewData: {
+                            DisplayOrder__c: 0,
+                            LogicalOperator__c: 'AND',
+                            LeftExpression__c: '',
+                            ComparisonOperator__c: 'is equal to',
+                            RightExpression__c: ''
+                        }
+                    };
+                }
+                break;
+                case 'Action':
+                {
+                    action_data_object = {
+                        NewData: {
+                            Active__c: true,
+                            RelaxedExecution__c: false,
+                            RetryInterval__c: 5,
+                            MaxRetries__c: 0,
+                            TargetObjectAPIName__c: ''
+                        },
+                        UIFlags: {
+                            expanded: true,
+                            parameter_change: true,
+                            objects_loaded: true
+                        },
+                        ChildDataObjects: [
+                            {
+                                SourceObject: 'FieldMappings',
+                                Records: [
+                                    {
+                                        ChildDataObjects: [],
+                                        NewData: {
+                                            APIName__c: "",
+                                            DataType__c: "Text",
+                                            DisplayName__c: "",
+                                            DisplayOrder__c: 0,
+                                            NullEmptyStringHandling__c: "No action",
+                                            Required__c: false,
+                                            SuppressEmptyString__c: false,
+                                            SuppressNull__c: false,
+                                            Type__c: "Field Mapping",
+                                            Value__c: ""
+                                        },
+                                        OldData: {}
+                                    }
+                                ]
+                            },
+                            {
+                                SourceObject: 'ResponseFields',
+                                Records: []
+                            },
+                            {
+                                SourceObject: 'ActionParameters',
+                                Records: []
+                            }
+                        ]
+                    };
+                }
+                break;
+                case 'Field':
+                {
+                    action_data_object = {
+                        ChildDataObjects: [],
+                        NewData: {
+                            APIName__c: "",
+                            DataType__c: "Text",
+                            DisplayName__c: "",
+                            DisplayOrder__c: 0,
+                            NullEmptyStringHandling__c: "No action",
+                            Required__c: false,
+                            SuppressEmptyString__c: false,
+                            SuppressNull__c: false,
+                            Type__c: "Field Mapping",
+                            Value__c: ""
+                        },
+                        OldData: {}
+                    };
+                }
+                break;
+                case 'Mapping':
+                {
+                    action_data_object = {
+                        "Error":"",
+                        "Parameters":{
+
+                        },
+                        "Records":[
+                            {
+                                "ChildDataObjects":[
+
+                                ],
+                                "NewData":{
+                                    "MappingName__c": "",
+                                    "DisplayOrder__c": 0,
+                                    "Input__c": "",
+                                    "Output__c": ""
+                                },
+                                "OldData":{
+
+                                }
+                            },
+                            {
+                                "ChildDataObjects":[
+
+                                ],
+                                "NewData":{
+                                    "MappingName__c": "",
+                                    "DisplayOrder__c": 1,
+                                    "Input__c": "",
+                                    "Output__c": ""
+                                },
+                                "OldData":{
+
+                                }
+                            },
+                            {
+                                "ChildDataObjects":[
+
+                                ],
+                                "NewData":{
+                                    "MappingName__c": "",
+                                    "DisplayOrder__c": 2,
+                                    "Input__c": "",
+                                    "Output__c": ""
+                                },
+                                "OldData":{
+
+                                }
+                            },
+                            {
+                                "ChildDataObjects":[
+
+                                ],
+                                "NewData":{
+                                    "MappingName__c": "",
+                                    "DisplayOrder__c": 3,
+                                    "Input__c": "",
+                                    "Output__c": ""
+                                },
+                                "OldData":{
+
+                                }
+                            },
+                            {
+                                "ChildDataObjects":[
+
+                                ],
+                                "NewData":{
+                                    "MappingName__c": "",
+                                    "DisplayOrder__c": 4,
+                                    "Input__c": "",
+                                    "Output__c": ""
+                                },
+                                "OldData":{
+
+                                }
+                            },
+                        ],
+                        "ResponseFields":{
+
+                        },
+                        "SourceObject":"Mapping__c"
+                    };
+                }
+                break;
+                case 'MappingDetail':
+                {
+                    action_data_object = {
+                        "ChildDataObjects":[
+
+                        ],
+                        "NewData":{
+                            "MappingName__c": "",
+                            "DisplayOrder__c": 0,
+                            "Input__c": "",
+                            "Output__c": ""
+                        },
+                        "OldData":{
+
+                        }
+                    };
+                }
+                break;
+                case 'Class':
+                {
+                    action_data_object = {
+                                            "Error": "",
+                                            "Parameters": {},
+                                            "Records": [
+                                                {
+                                                    "ChildDataObjects": [],
+                                                    "NewData": {
+                                                        "Namespace__c": "",
+                                                        "Class__c": ""
+                                                    },
+                                                    "OldData": {}
+                                                }
+                                                ],
+                                                "ResponseFields": {},
+                                                "SourceObject": "ClassRegistration__c"
+                                            }
+                }
+                break;
+            }
+
+            return action_data_object;
+
+        }
+
+        SFUI.abstract_data_add = function (type, action_data_object) {
+
+            switch(type)
+            {
+                case 'Rules':
+                {
+                    // Set UIflags
+                    angular.forEach(action_data_object.Records, function (rule, key) {
+                        rule.UIFlags = {};
+                        rule.UIFlags.expanded = false;
+                        if (rule.NewData.Active__c == 'true') {
+                            rule.NewData.Active__c = true;
+                        }
+                        if (rule.NewData.Active__c == 'false') {
+                            rule.NewData.Active__c = false;
+                        }
+                        angular.forEach(rule.ChildDataObjects, function (detail, key) {
+                            if (detail.SourceObject == 'RuleConditions__c') {
+                                angular.forEach(detail.Records, function (conditions_collection, key) {
+                                    angular.forEach(conditions_collection.Records, function (condition, key) {
+                                        condition.NewData.DisplayOrder__c = parseInt(condition.NewData.DisplayOrder__c);
+                                    })
+                                });
+                            }
+                            if (detail.SourceObject == 'Action__c') {
+                                angular.forEach(detail.Records, function (action, key) {
+
+                                    action.UIFlags = {};
+                                    action.UIFlags.expanded = false;
+                                    action.UIFlags.parameter_change = false;
+                                    action.UIFlags.objects_loaded = false;
+                                    if (action.NewData.Id == undefined) {
+                                        action.UIFlags.expanded = true;
+                                        action.UIFlags.parameter_change = true;
+                                        action.UIFlags.objects_loaded = true;
+                                    }
+                                    if (action.NewData.RelaxedExecution__c == 'true') {
+                                        action.NewData.RelaxedExecution__c = true;
+                                    }
+                                    if (action.NewData.RelaxedExecution__c == 'false') {
+                                        action.NewData.RelaxedExecution__c = false;
+                                    }
+                                    if (action.NewData.Active__c == 'true') {
+                                        action.NewData.Active__c = true;
+                                    }
+                                    if (action.NewData.Active__c == 'false') {
+                                        action.NewData.Active__c = false;
+                                    }
+
+                                    action.MetaDataObjects = {};
+                                    action.MetaDataObjects.Records = [];
+                                    action.MetaDataObjectsFields = {};
+                                    action.MetaDataObjectsFields.Records = [];
+
+                                    action.NewData.DisplayOrder__c = parseInt(action.NewData.DisplayOrder__c);
+
+                                    angular.forEach(action.ChildDataObjects, function (field_object, key) {
+
+                                        if (field_object.SourceObject == 'ActionParameters') {
+                                            angular.forEach(field_object.Records, function (field, key) {
+                                                field.NewData.DisplayOrder__c = parseInt(field.NewData.DisplayOrder__c);
+                                                if (field.NewData.PicklistValues__c) {
+                                                    field.NewData.PicklistValues_Array__c = field.NewData.PicklistValues__c.split("||");
+                                                }
+                                            });
+                                        }
+
+                                        if (field_object.SourceObject == 'FieldMappings') {
+                                            angular.forEach(field_object.Records, function (field, key) {
+                                                field.NewData.DisplayOrder__c = parseInt(field.NewData.DisplayOrder__c);
+                                                if (field.NewData.SuppressEmptyString__c == 'true') {
+                                                    field.NewData.SuppressEmptyString__c = true;
+                                                }
+                                                if (field.NewData.SuppressEmptyString__c == 'false') {
+                                                    field.NewData.SuppressEmptyString__c = false;
+                                                }
+                                                if (field.NewData.SuppressNull__c == 'true') {
+                                                    field.NewData.SuppressNull__c = true;
+                                                }
+                                                if (field.NewData.SuppressNull__c == 'false') {
+                                                    field.NewData.SuppressNull__c = false;
+                                                }
+                                            });
+                                        }
+
+                                        if (field_object.SourceObject == 'ResponseFields') {
+                                            angular.forEach(field_object.Records, function (field, key) {
+                                                field.NewData.DisplayOrder__c = parseInt(field.NewData.DisplayOrder__c);
+                                                if (field.NewData.SuppressEmptyString__c == 'true') {
+                                                    field.NewData.SuppressEmptyString__c = true;
+                                                }
+                                                if (field.NewData.SuppressEmptyString__c == 'false') {
+                                                    field.NewData.SuppressEmptyString__c = false;
+                                                }
+                                                if (field.NewData.SuppressNull__c == 'true') {
+                                                    field.NewData.SuppressNull__c = true;
+                                                }
+                                                if (field.NewData.SuppressNull__c == 'false') {
+                                                    field.NewData.SuppressNull__c = false;
+                                                }
+                                            });
+                                        }
+
+                                    })
+                                });
+                            }
+                        });
+                    });
+                }
+                break;
+                case 'Settings':
+                {
+                    // Add required UI flags
+                    angular.forEach(action_data_object.Records, function (setting, key) {
+
+                        // Manipulate PiclistValues to array for UI
+                        if (setting.NewData.PicklistValues__c) {
+                            setting.NewData.PicklistValues_Array__c = setting.NewData.PicklistValues__c.split("||");
+                        }
+
+                        // Manipulate boolean values
+                        if (setting.NewData.DataType__c == 'Boolean') {
+                            if (setting.NewData.SettingValue__c == 'true') {
+                                setting.NewData.SettingValue__c = true;
+                            }
+                            if (setting.NewData.SettingValue__c == 'false') {
+                                setting.NewData.SettingValue__c = false;
+                            }
+                        }
+
+                        // Manipulate checkbox values
+                        if (setting.NewData.DataType__c == 'Checkbox') {
+                            if (setting.NewData.SettingValue__c == 'true') {
+                                setting.NewData.SettingValue__c = true;
+                            }
+                            if (setting.NewData.SettingValue__c == 'false') {
+                                setting.NewData.SettingValue__c = false;
+                            }
+                        }
+
+                        // Remove encrypted values
+                        if (setting.NewData.DataType__c == 'Encrypted') {
+                            setting.NewData.SettingValue__c == '';
+                        }
+
+                    });
+                }
+                break;
+                case 'Connections':
+                {
+                    angular.forEach(action_data_object.Records, function (connection, key) {
+                        if (connection.NewData.Active__c == 'true') {
+                            connection.NewData.Active__c = true;
+                        }
+                        if (connection.NewData.Active__c == 'false') {
+                            connection.NewData.Active__c = false;
+                        }
+                        angular.forEach(connection.ChildDataObjects, function (connection_meta, key) {
+                            if (connection_meta.SourceObject == 'ConnectionDetails__c') {
+                                angular.forEach(connection_meta.Records, function (setting, key) {
+                                    if (setting.NewData.DataType__c == 'PICKLIST') {
+                                        setting.NewData.PicklistValues_Array__c = setting.NewData.Picklist_Values__c.split("||");
+                                    }
+
+                                    if (setting.NewData.DataType__c == 'BOOLEAN' || setting.NewData.DataType__c == 'CHECKBOX') {
+                                        if (setting.NewData.SettingValue__c == 'true') {
+                                            setting.NewData.SettingValue__c = true;
+                                        }
+                                        if (setting.NewData.SettingValue__c == 'false') {
+                                            setting.NewData.SettingValue__c = false;
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                    });
+                }
+                break;
+                case 'Adapters':
+                {
+                }
+                break;
+                case 'AdapterSettings':
+                {
+
+                    angular.forEach(action_data_object.Records, function (adapter_setting, key) 
+                    {
+
+                        // Manipulate PiclistValues to array for UI
+                        if (adapter_setting.NewData.PicklistValues__c) 
+                        {
+                            adapter_setting.NewData.PicklistValues_Array__c = adapter_setting.NewData.PicklistValues__c.split("||");
+                        }
+
+                        // Manipulate Boolean and Checkbox value
+                        if (adapter_setting.NewData.DataType__c == 'BOOLEAN' || adapter_setting.NewData.DataType__c == 'CHECKBOX') {
+                            if (adapter_setting.NewData.SettingValue__c == 'true') {
+                                adapter_setting.NewData.SettingValue__c = true;
+                            }
+                            if (adapter_setting.NewData.SettingValue__c == 'false') {
+                                adapter_setting.NewData.SettingValue__c = false;
+                            }
+                        }
+
+                    });
+
+                }
+                break;
+                case 'Parameters':
+                {
+
+                    angular.forEach(action_data_object.Records, function (adapter_setting, key) 
+                    {
+
+                      
+                        if (angular.isDefined(adapter_setting.NewData.PicklistValues__c) && adapter_setting.NewData.PicklistValues__c != '') 
+                        {
+                            adapter_setting.NewData.PicklistValues_Array__c = adapter_setting.NewData.PicklistValues__c.split("||");
+                        }   
+  
+                        if (angular.isDefined(adapter_setting.NewData.Picklist_Values__c) && adapter_setting.NewData.Picklist_Values__c != '') 
+                        {
+                            adapter_setting.NewData.PicklistValues_Array__c = adapter_setting.NewData.Picklist_Values__c.split("||");
+                        }
+                        
+                        adapter_setting.NewData.Type__c = 'Parameter';
+
+                    });
+
+                }
+                break;
+                case 'ExitsingAdapterSettings':
+                {
+                    angular.forEach(action_data_object.Records, function (adapter_setting, key) 
+                    {
+
+                        // Manipulate PiclistValues to array for UI
+                        if (angular.isDefined(adapter_setting.NewData.PicklistValues__c) && adapter_setting.NewData.PicklistValues__c != '') 
+                        {
+                            adapter_setting.NewData.PicklistValues_Array__c = adapter_setting.NewData.PicklistValues__c.split("||");
+                            if (adapter_setting.NewData.SettingValue__c == '' && angular.isDefined(adapter_setting.NewData.DefaultValue__c) && adapter_setting.NewData.PicklistValues_Array__c.indexOf(adapter_setting.NewData.DefaultValue__c) != -1) 
+                            {
+                                adapter_setting.NewData.SettingValue__c = adapter_setting.NewData.DefaultValue__c;
+                            }
+                        }
+
+                        if (angular.isDefined(adapter_setting.NewData.Picklist_Values__c) && adapter_setting.NewData.Picklist_Values__c != '') 
+                        {
+                            adapter_setting.NewData.PicklistValues_Array__c = adapter_setting.NewData.Picklist_Values__c.split("||");
+                            if (adapter_setting.NewData.SettingValue__c == '' && angular.isDefined(adapter_setting.NewData.DefaultValue__c) && adapter_setting.NewData.PicklistValues_Array__c.indexOf(adapter_setting.NewData.DefaultValue__c) != -1) 
+                            {
+                                adapter_setting.NewData.SettingValue__c = adapter_setting.NewData.DefaultValue__c;
+                            }
+                        }
+
+                        // Manipulate Boolean and Checkbox value
+                        if (adapter_setting.NewData.DataType__c == 'BOOLEAN' || adapter_setting.NewData.DataType__c == 'CHECKBOX') {
+                            if (adapter_setting.NewData.SettingValue__c == 'true') {
+                                adapter_setting.NewData.SettingValue__c = true;
+                            }
+                            if (adapter_setting.NewData.SettingValue__c == 'false') {
+                                adapter_setting.NewData.SettingValue__c = false;
+                            }
+                        }
+
+                    });
+
+                }
+                break;
+                case 'Mappings':
+                {
+                    if (angular.isDefined(action_data_object.Records[0])) {
+                        action_data_object.MappingName = action_data_object.Records[0].NewData.MappingName__c;
+                        angular.forEach(action_data_object.Records, function (mapping, key) {
+                            mapping.NewData.DisplayOrder__c = parseInt(mapping.NewData.DisplayOrder__c);
+                        });
+                    }
+                }
+                break;
+                case 'CustomFunctions':
+                {
+
+                    angular.forEach(action_data_object.Records, function (function_group, key) {
+                        function_group.UIFlags = {};
+                        function_group.UIFlags.expanded = false;
+                    });
+
+                }
+                break;
+                case 'Classes':
+                {
+
+                    angular.forEach(action_data_object.Records, function (class_data, key) {
+                        if (class_data.NewData.Adapter__c == 'true') {
+                            class_data.NewData.Adapter__c = true;
+                        }
+                        if (angular.isDefined(class_data.NewData.Adapter__c) == false || class_data.NewData.Adapter__c == 'false') {
+                            class_data.NewData.Adapter__c = false;
+                        }
+                        if (class_data.NewData.CustomFunctions__c == 'true') {
+                            class_data.NewData.CustomFunctions__c = true;
+                        }
+                        if (angular.isDefined(class_data.NewData.CustomFunctions__c) == false || class_data.NewData.CustomFunctions__c == 'false') {
+                            class_data.NewData.CustomFunctions__c = false;
+                        }
+                    });
+
+                }
+                break;
+            }
+
+            return action_data_object;
+
+        }
+
+        SFUI.abstract_data_remove = function (type, action_data_object_src) {
+
+            var action_data_object = angular.copy(action_data_object_src);
+
+            switch(type)
+            {
+                case 'Settings':
+                {
+                    // Remove UI flags
+                    angular.forEach(action_data_object.Records, function (setting, key) {
+                        delete setting.NewData.PicklistValues_Array__c;
+                    });
+                }
+                break;
+                case 'AdapterSettings':
+                {
+                    // Remove UI flags
+                    angular.forEach(action_data_object.Records, function (adapter_setting, key) {
+                        delete adapter_setting.NewData.PicklistValues_Array__c;
+                    });
+                }
+                break;
+                case 'Parameters':
+                {
+                    // Remove UI flags
+                    angular.forEach(action_data_object.Records, function (adapter_setting, key) {
+                        delete adapter_setting.NewData.PicklistValues_Array__c;
+                    });
+                }
+                break;
+                case 'Rules':
+                {
+                    // Remove UI flags
+                    angular.forEach(action_data_object.Records, function (rule, key) {
+                        delete rule.UIFlags;
+                        delete rule.Actions;
+                        delete rule.Conditions;
+                        angular.forEach(rule.ChildDataObjects, function (child_data, key) {
+                            if (child_data.SourceObject == 'Action__c') {
+                                angular.forEach(child_data.Records, function (action, key) {
+                                    delete action.UIFlags;
+                                    delete action.MetaDataObjects;
+                                    delete action.MetaDataObjectsFields;
+                                    delete action.ConnectorSettings;
+                                    delete action.FieldMappings;
+                                    delete action.ResponseFields;
+                                    delete action.ResponseMappings;
+                                    delete action.ActionParameters;
+                                    angular.forEach(action.ChildDataObjects, function (action_metadata, key) {
+                                        if (action_metadata.SourceObject == 'FieldMappings') {
+                                            angular.forEach(action_metadata.Records, function (field, key) {
+                                                if (field.NewData.APIName__c == '') {
+                                                    action_metadata.Records.splice(key, 1);
+                                                }
+                                            });
+                                        }
+                                        if (action_metadata.SourceObject == 'ResponseFields') {
+                                            angular.forEach(action_metadata.Records, function (field, key) {
+                                                if (field.NewData.APIName__c == '') {
+                                                    action_metadata.Records.splice(key, 1);
+                                                }
+                                            });
+                                        }
+                                    })
+                                });
+                            }
+                        });
+                    });
+                }
+                break;
+                case 'Mappings':
+                {
+                    // Remove UI flags
+                    var mapping_name = angular.copy(action_data_object.MappingName);
+                    delete action_data_object.Details;
+                    delete action_data_object.MappingName;
+                    action_data_object.Records_New = angular.copy(action_data_object.Records);
+                    action_data_object.Records = [];
+                    angular.forEach(action_data_object.Records_New, function (mapping_field, key) {
+                        if (mapping_field.NewData.Input__c != "") {
+                            mapping_field.NewData.MappingName__c = mapping_name;
+                            action_data_object.Records.push(mapping_field);
+                        }
+                    });
+                    delete action_data_object.Records_New;
+                }
+                break;
+            }
+
+            console.log({data_sent_to_server: action_data_object});
+
+            return action_data_object;
+
+        }
+
+        return SFUI;
+
+}]);
+
+
+
+$( document ).ready(function() 
+{
+    intervalId = setInterval(keepAlive, 180000);
+ 	
+	var logoId = "phHeaderLogoImage";
+	var picLogo = $("#" + logoId);
+	if(picLogo != null)
+	{
+		//.css('left', '300px');
+		picLogo.css("width", "55px");
+		picLogo.css("height", "55px");
+		picLogo.parent().css("width", "55px");
+		picLogo.parent().css("height", "55px");
+		
+	}
+			
+
+  	
+});
+
+
+//BMORGAN - Fix for hidden logout
+var intervalId;
+
+function keepAlive()
+{
+	Visualforce.remoting.Manager.invokeAction(
+        "{!remotingSpace}.keepAlive",
+        function (result, event) {
+		    // Success callback
+		    if (!event || event.result != 'session extended' || event.statusCode >= 400) 
+		    {
+		    	if(!event)
+		    		alert('Error during session check: Failed to connect to Salesforce.');
+		    	else
+		    	{
+		    		if(event.message.toLowerCase().indexOf('logged in') > -1)
+		    		{
+			    		alert('Error during session check: Session has expired.  Please log in again.');
+			    		location.reload();
+		    		}
+					else
+						alert('Error during session check: ' + event.message);
+		    	}
+		 	}
+		},
+        {escape: false}
+    );
+    
+    
+}
+//BMORGAN - End fix for timeout
+
+
+
+
+</script>
+        <script src="{!URLFOR($Resource.UIresources, 'scripts/functions.js')}"></script>
+
+ 		<!-- ************************* Kendo test-->
+
+
+
+      
+ 		
+        <!-- Header -->
+        <header id="ahHeader" class="header cloaked">
+            <div class="slds-container--large slds-container--center">
+                <div class="slds-grid">
+
+                    <!-- Header Logo -->
+                    <div class="header-logo slds-col slds-col--padded slds-size--2-of-12">
+                        <a href=""><img src="{{ application.generate_resource_url('images/logo-actionhub.svg') }}" alt="actionHub"/></a>
+                    </div>
+
+                    <!-- Header Navigation -->
+                    <nav class="header-navigation slds-col slds-size--2-of-12" >
+                        <a href="" ng-click="application.menu_toggle()" class="header-navigation-button" >
+                            <svg aria-hidden="true" class="header-navigation-button-icon">
+                                <use xlink:href="{{ application.generate_resource_url(menu.active.icon) }}"></use>
+                            </svg>
+                            <span class="header-navigation-button-label" >
+                                {{ menu.active.label }}
+                            </span>
+                            <svg aria-hidden="true" class="header-navigation-button-icon">
+                                <use xlink:href="{{ application.generate_resource_url('images/icons/utility/symbols.svg#chevrondown') }}"></use>
+                            </svg>
+                        </a>
+                        <ul class="header-navigation-submenu" ng-show="menu.list_status" >
+                            <li ng-repeat="menu_item in menu.list" >
+                                <a href="" ng-click="application.menu_link(menu_item.location, $index)" class="header-navigation-submenu-button">
+                                    <svg aria-hidden="true" class="header-navigation-submenu-button-icon">
+                                        <use xlink:href="{{ application.generate_resource_url(menu_item.icon) }}"></use>
+                                    </svg>
+                                    <span class="header-navigation-submenu-button-label" >
+                                        {{ menu_item.label }}
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Header Search -->
+                    <div class="header-search slds-col slds-col--padded slds-align-middle slds-size--8-of-12">
+                        <form ng-submit="application.search()">
+                            <input class="slds-input" type="text" placeholder="Search rules and actions" ng-model="search_term" />
+                            <span class="search-action-label" ng-if="search_term != ''">
+                                Press <kbd class="search-action-label-key">Enter</kbd> to search rules
+                            </span>
+                        </form>
+
+                    </div>
+                     <!-- ****************** -->
+	                <a href="{!documentationURL}" target="_blank" style="z-index:99999 !important; top:10px; right:-50px; position:absolute;" title="Click to open actionHub help documentation">
+			        	<!--img src="/s.gif" alt="" class="helpIcon" /-->
+			        	<!-- images/icons/utility/symbols.svg#help -->
+			        	<!-- img src="{{ application.generate_resource_url('images/icons/utility/symbols.svg#help') }}" alt="" class="header-navigation-button-icon" / -->
+			        	<svg aria-hidden="true" class="header-navigation-button-icon" style="fill: #ffffff;">
+                            <!--use xlink:href="{{ application.generate_resource_url('images/icons/utility/symbols.svg#help') }}"></use-->
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{{ application.generate_resource_url('images/icons/utility/symbols.svg#help') }}"></use>
+                        </svg>	        	
+					</a>
+					
+					<!-- svg aria-hidden="true" class="header-navigation-button-icon">
+                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/resource/1474678063000/actionhub__UIresources/images/icons/utility/symbols.svg#connected_apps"></use>
+                    </svg -->
+					<!-- ****************** -->
+                </div>
+               
+            </div>
+           
+        </header>
+
+
+
+
+
+        <!--
+		<div modal="showModal" close="cancel()" ng-controller="dialogController">
+		    <div class="modal-header">
+		        <h4>Modal Dialog</h4>
+		    </div>
+		    <div class="modal-body">
+		        <p>Example paragraph with some text.</p>
+		    </div>
+		    <div class="modal-footer">
+		      <button class="btn btn-success" ng-click="ok()">Okay</button>
+		      <button class="btn" ng-click="cancel()">Cancel</button>
+		    </div>
+		</div>
+		-->
+		
+
+
+
+
+
+
+
+
+        
+        <!-- Main Content -->
+        <ui-view class="controller-outer" ></ui-view>
+
+        <!-- Backdrop -->
+        <div class="backdrop" ng-if="application.menu.list_status" ng-click="application.body_reset()"></div>
+
+        <!-- Toast Messages -->
+        <toast></toast>
+
+    </div>
+
+</apex:page>
