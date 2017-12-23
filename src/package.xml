@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>BMCServiceDesk__Remedyforce_Administrator</members>
-        <members>BMCServiceDesk__ServiceDesk_Change_Manager</members>
-        <members>BMCServiceDesk__ServiceDesk_Client</members>
-        <members>BMCServiceDesk__ServiceDesk_Release_Coordinator</members>
-        <members>BMCServiceDesk__ServiceDesk_Staff</members>
-        <members>ITSM_User</members>
-        <members>actionHub__actionHubConnectionUsers</members>
-        <name>PermissionSet</name>
+        <members>BMCServiceDesk__BMC_AccessPoint__c-Access Point Layout</members>
+        <members>BMCServiceDesk__BMC_Account__c-Account Configuration Item Layout</members>
+        <members>BMCServiceDesk__BMC_HardwarePackage__c-Hardware Package Layout</members>
+        <members>BMCServiceDesk__BMC_LogicalEntity__c-Logical Entity Layout</members>
+        <members>BMCServiceDesk__BMC_MFCouplingFacility__c-MF Coupling Facility Layout</members>
+        <members>BMCServiceDesk__BMC_OfferingMeasuredBy__c-Offering Measured By Layout</members>
+        <members>BMCServiceDesk__BMC_ProtocolEndPoint__c-Protocol End Point Layout</members>
+        <members>BMCServiceDesk__ChangeCollision__c-Change Collision Layout</members>
+        <members>BMCServiceDesk__Change_Request__c-Remedyforce Change for Clients Version 1%2E0</members>
+        <members>BMCServiceDesk__Encryption_Report__c-Encryption Report Layout</members>
+        <members>BMCServiceDesk__Priority__c-Priority Layout</members>
+        <members>BMCServiceDesk__SLA_History__c-SLA History Layout</members>
+        <members>BMCServiceDesk__SYSProperties__c-System Properties Layout</members>
+        <members>BMCServiceDesk__SYSStage__c-Stage Layout</members>
+        <members>DuplicateRecordSet-Duplicate Record Set Layout</members>
+        <members>OpportunityLineItem-Opportunity Product Layout</members>
+        <members>Pricebook2-Price Book Layout</members>
+        <members>actionHub__ActionDetail__c-Action Detail Layout</members>
+        <name>Layout</name>
     </types>
     <version>41.0</version>
 </Package>
