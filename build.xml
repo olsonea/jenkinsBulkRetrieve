@@ -46,6 +46,21 @@
         />
     </target>
 
+    <target name="retrieveFromPackageXML">
+        <mkdir dir="${retrieveTargetDirectory}"/>
+        <!-- Retrieve the contents into another directory -->
+        <sf:retrieve
+            username="${targetUsername}"
+            password="${targetPassword}"
+            sessionId="${sf.sessionId}"
+            serverurl="${targetServerURL}"
+            maxPoll="${sf.maxPoll}"
+            retrieveTarget="${retrieveTargetDirectory}"
+            unpackaged="retrieve_package.xml"
+        />
+    </target>
+
+
     <!-- Retrieve all the items of a particular metadata type -->
     <target name="bulkRetrieve">
         <mkdir dir="${retrieveTargetDirectory}"/>
