@@ -57,6 +57,7 @@
             maxPoll="${sf.maxPoll}" 
             retrieveTarget="${retrieveTargetDirectory}"
             metadataType="${metadataType}"
+            batchSize="${batchSize}"
         />
     </target>
 
