@@ -1,24 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>BMCServiceDesk__BMC_Account__c</members>
-        <members>BMCServiceDesk__BMC_Application__c</members>
-        <members>BMCServiceDesk__BMC_BusinessService__c</members>
-        <members>BMCServiceDesk__BMC_Cluster__c</members>
-        <members>BMCServiceDesk__BMC_Collection__c</members>
-        <members>BMCServiceDesk__BMC_DataBase__c</members>
-        <members>BMCServiceDesk__BMC_HostedSystemComponents__c</members>
-        <members>BMCServiceDesk__BMC_Mainframe__c</members>
-        <members>BMCServiceDesk__BMC_NTDomain__c</members>
-        <members>BMCServiceDesk__BMC_Offering__c</members>
-        <members>BMCServiceDesk__BMC_Role__c</members>
-        <members>BMCServiceDesk__CMDB_AttributeDefinition__c</members>
-        <members>BMCServiceDesk__FAQ_Feedback__c</members>
-        <members>BMCServiceDesk__RemedyforceConsole</members>
-        <members>BMCServiceDesk__RemedyforceMobile</members>
-        <members>BMCServiceDesk__Remedyforce_Workspaces</members>
-        <members>BMCServiceDesk__SelfService_Beta</members>
-        <name>CustomTab</name>
+        <members>BMCServiceDesk__ACLaunchDirectAction</members>
+        <members>BMCServiceDesk__AddNoteTextEditor</members>
+        <members>BMCServiceDesk__AdminNormalizationPage</members>
+        <members>BMCServiceDesk__AdvancedSearchFilter</members>
+        <members>BMCServiceDesk__ChatterListenerPage</members>
+        <members>BMCServiceDesk__CloseIncidentPage</members>
+        <members>BMCServiceDesk__ConfigApp</members>
+        <members>BMCServiceDesk__ConsoleAdminSetting</members>
+        <members>BMCServiceDesk__CustomActionPage</members>
+        <members>BMCServiceDesk__DocPage</members>
+        <members>BMCServiceDesk__FulfillmentInputDetailPage</members>
+        <members>BMCServiceDesk__IncProcMgmtPage</members>
+        <members>BMCServiceDesk__MobileAppIphoneRD</members>
+        <members>BMCServiceDesk__QueueListPage</members>
+        <members>BMCServiceDesk__ReleaseConsole</members>
+        <members>BMCServiceDesk__SSBroadcastWidgetPage</members>
+        <members>BMCServiceDesk__SSCategoryGroupingPage</members>
+        <members>BMCServiceDesk__StandardResolutionPage</members>
+        <members>BMCServiceDesk__StdBroadcastTicker</members>
+        <members>BMCServiceDesk__StdTaskExtension</members>
+        <members>BMCServiceDesk__SuggestionPage</members>
+        <members>BandwidthExceeded</members>
+        <members>SiteTemplate</members>
+        <members>actionHub__actionHubMSSA</members>
+        <name>ApexPage</name>
     </types>
     <version>41.0</version>
 </Package>
