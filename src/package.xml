@@ -1,25 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>Admin</members>
-        <members>Chatter External User</members>
-        <members>Chatter Free User</members>
-        <members>Chatter Moderator User</members>
-        <members>ContractManager</members>
-        <members>CustomLogin Profile</members>
-        <members>Guest</members>
-        <members>Guest License User</members>
-        <members>MarketingProfile</members>
-        <members>ReadOnly</members>
-        <members>SelfService Profile</members>
-        <members>ServiceDesk Change Manager</members>
-        <members>ServiceDesk Client</members>
-        <members>ServiceDesk Staff</members>
-        <members>ServiceDesk System Administrator</members>
-        <members>SolutionManager</members>
-        <members>Standard</members>
-        <members>StandardAul</members>
-        <name>Profile</name>
+        <members>BMCServiceDesk__Remedyforce_Administrator</members>
+        <members>BMCServiceDesk__ServiceDesk_Change_Manager</members>
+        <members>BMCServiceDesk__ServiceDesk_Client</members>
+        <members>BMCServiceDesk__ServiceDesk_Release_Coordinator</members>
+        <members>BMCServiceDesk__ServiceDesk_Staff</members>
+        <members>ITSM_User</members>
+        <members>actionHub__actionHubConnectionUsers</members>
+        <name>PermissionSet</name>
     </types>
     <version>41.0</version>
 </Package>
