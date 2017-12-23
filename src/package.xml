@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>BMCServiceDesk__AdminGeneralSettingsControllerTest</members>
-        <members>BMCServiceDesk__ChangeRequestControllerTest</members>
-        <members>BMCServiceDesk__HandleFutureFailures</members>
-        <members>BMCServiceDesk__TemplatePortletController</members>
-        <members>BMCServiceDesk__UserContextComponentController</members>
-        <members>MyProfilePageControllerTest</members>
-        <name>ApexClass</name>
+        <members>BMCServiceDesk__Advanced_Search_Filter_Criteria__c</members>
+        <members>BMCServiceDesk__BMC_CDROMDrive__c</members>
+        <members>BMCServiceDesk__BMC_Chassis__c</members>
+        <members>BMCServiceDesk__BMC_Component__c</members>
+        <members>BMCServiceDesk__BMC_Contract__c</members>
+        <members>BMCServiceDesk__BMC_Dependency__c</members>
+        <members>BMCServiceDesk__BMC_MFCouplingFacility__c</members>
+        <members>BMCServiceDesk__BMC_WAN__c</members>
+        <members>BMCServiceDesk__Priority__c</members>
+        <members>BMCServiceDesk__Service_Target_Criteria__c</members>
+        <members>Event</members>
+        <members>Macro</members>
+        <members>actionHub__Log__c</members>
+        <name>CustomObject</name>
     </types>
     <version>41.0</version>
 </Package>
