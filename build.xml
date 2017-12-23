@@ -112,8 +112,7 @@
             testLevel="RunSpecifiedTests" 
             rollbackOnError="true"
         />
-              <runTest>Queue_Manager_Test</runTest> 
-      </sf:deploy>
+        <runTest>Queue_Manager_Test</runTest> 
     </target>
     
      <!-- Shows deploying code with no TestLevel sepcified -->
